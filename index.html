@@ -5,61 +5,46 @@
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
 <title>Portal Fortix Solutions</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.4.0/dist/tabler-icons.min.css"/>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"><\/script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-:root{--bg:#f0f0ee;--card:#fff;--border:#e2e0d8;--text:#1a1a18;--text2:#5a5a58;--blue:#185FA5;--blu:#E6F1FB;--amber:#BA7517;--ambl:#FAEEDA;--green:#2D7D3A;--grenl:#E6F4EA;--red:#C0392B;--redl:#FCEBEB;--r:12px;--sh:0 2px 12px rgba(0,0,0,0.08)}
+:root{--bg:#f0f0ee;--card:#fff;--border:#e2e0d8;--text:#1a1a18;--text2:#5a5a58;--blue:#185FA5;--blu:#E6F1FB;--amber:#BA7517;--green:#2D7D3A;--grenl:#E6F4EA;--red:#C0392B;--redl:#FCEBEB;--ambl:#FAEEDA;--r:12px}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:var(--bg);min-height:100vh;color:var(--text)}
-/* LOGIN */
 .lw{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:1.5rem}
-.lc{background:var(--card);border-radius:var(--r);border:1px solid var(--border);padding:2.5rem 2rem;width:100%;max-width:400px;box-shadow:var(--sh)}
-.ll{text-align:center;margin-bottom:1.5rem}.ll img{height:80px;width:auto}
-.lt{font-size:20px;font-weight:600;text-align:center;margin-bottom:4px}
+.lc{background:var(--card);border-radius:var(--r);border:1px solid var(--border);padding:2.5rem 2rem;width:100%;max-width:400px}
+.lt{font-size:26px;font-weight:900;text-align:center;margin-bottom:4px;color:var(--blue);letter-spacing:-1px}
 .ls{font-size:13px;color:var(--text2);text-align:center;margin-bottom:1.5rem}
 .fi{display:flex;flex-direction:column;gap:4px;margin-bottom:12px}
 .fi label{font-size:13px;font-weight:500;color:var(--text2)}
-.fi input{font-size:14px;background:#f9f8f5;border:1px solid var(--border);border-radius:8px;padding:10px 12px;outline:none;font-family:inherit;width:100%}
-.fi input:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(24,95,165,.12);background:#fff}
-.bp{width:100%;background:var(--blue);color:#fff;border:none;border-radius:8px;padding:11px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;margin-top:4px}
-.bp:hover{background:#0C447C}
+.fi input,.fi select{font-size:14px;background:#f9f8f5;border:1px solid var(--border);border-radius:8px;padding:10px 12px;outline:none;font-family:inherit;width:100%}
+.fi input:focus{border-color:var(--blue);background:#fff}
+.bp{width:100%;background:var(--blue);color:#fff;border:none;border-radius:8px;padding:11px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit}
 .em{background:var(--redl);border:1px solid #F09595;border-radius:8px;padding:10px 12px;font-size:13px;color:var(--red);margin-top:10px;display:none}
-/* PORTAL */
-.pw{display:none;min-height:100vh;position:relative}
-/* SIDEBAR */
+.pw{display:none;min-height:100vh}
 .sb{position:fixed;top:0;left:0;width:240px;height:100vh;background:var(--card);border-right:1px solid var(--border);padding:1.25rem 1rem;display:flex;flex-direction:column;z-index:100;overflow-y:auto}
-.sb-logo{text-align:center;margin-bottom:1.25rem;padding-bottom:1rem;border-bottom:1px solid var(--border)}
-.sb-logo img{height:55px;width:auto}
+.sb-logo{text-align:center;margin-bottom:1.25rem;padding-bottom:1rem;border-bottom:1px solid var(--border);font-size:22px;font-weight:900;color:var(--blue);letter-spacing:-1px}
 .sb-user{display:flex;align-items:center;gap:10px;margin-bottom:1.25rem;padding:10px;background:var(--blu);border-radius:8px}
 .sb-av{width:34px;height:34px;border-radius:50%;background:var(--blue);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;flex-shrink:0}
 .sb-name{font-size:13px;font-weight:600;color:var(--blue)}
 .sb-role{font-size:11px;color:var(--text2)}
 .nav-sep{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#aaa;padding:10px 10px 4px}
-.ni{display:flex;align-items:center;gap:9px;padding:9px 10px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:500;color:var(--text2);margin-bottom:2px;transition:all .15s}
+.ni{display:flex;align-items:center;gap:9px;padding:9px 10px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:500;color:var(--text2);margin-bottom:2px}
 .ni:hover,.ni.active{background:var(--blu);color:var(--blue)}
 .ni i{font-size:17px}
 .nl{margin-top:auto;display:flex;align-items:center;gap:9px;padding:9px 10px;border-radius:8px;cursor:pointer;font-size:13px;color:var(--red);border:1px solid #F09595;background:var(--redl)}
-/* MAIN */
 .mn{margin-left:240px;padding:2rem;min-height:100vh}
-.mh{display:none;align-items:center;gap:12px;padding:1rem;background:var(--card);border-bottom:1px solid var(--border);margin:-2rem -2rem 2rem}
-.hb{font-size:24px;cursor:pointer}
 .pt{font-size:22px;font-weight:700;margin-bottom:4px}
-.ps{font-size:14px;color:var(--text2);margin-bottom:1.75rem}
-/* STATS */
-.sg{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:1.75rem}
+.ps{font-size:14px;color:var(--text2);margin-bottom:1.5rem}
+.sg{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:1.5rem}
 .sc{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:1rem}
 .si{font-size:22px;margin-bottom:6px}
 .sl{font-size:11px;font-weight:500;color:var(--text2);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px}
 .sv{font-size:26px;font-weight:700}
-/* CARD */
 .cd{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:1.25rem;margin-bottom:1rem}
 .ch{display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem}
 .ct{font-size:15px;font-weight:600}
 .bs{padding:6px 14px;border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;font-family:inherit;border:1px solid var(--border);background:transparent;color:var(--text)}
-.bs:hover{background:var(--bg)}
 .bb{background:var(--blue);color:#fff;border-color:var(--blue)}
-.bb:hover{background:#0C447C}
-.ba{background:var(--amber);color:#fff;border-color:var(--amber)}
-/* TABLE */
 table{width:100%;border-collapse:collapse;font-size:13px}
 th{text-align:left;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--text2);padding:7px 10px;border-bottom:1px solid var(--border)}
 td{padding:9px 10px;border-bottom:1px solid #f0ede6;vertical-align:middle}
@@ -70,20 +55,17 @@ tr:hover td{background:var(--bg)}
 .ba2{background:var(--ambl);color:var(--amber)}
 .br2{background:var(--redl);color:var(--red)}
 .bb2{background:var(--blu);color:var(--blue)}
-/* PONTO */
 .clk{font-size:40px;font-weight:700;color:var(--blue);text-align:center;letter-spacing:3px;margin:1rem 0 4px}
 .cdt{font-size:13px;color:var(--text2);text-align:center;margin-bottom:1.25rem}
 .pg{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:1rem}
-.pb{display:flex;flex-direction:column;align-items:center;gap:5px;padding:12px;border-radius:8px;cursor:pointer;border:none;font-family:inherit;font-size:12px;font-weight:600;transition:.15s}
+.pb{display:flex;flex-direction:column;align-items:center;gap:5px;padding:12px;border-radius:8px;cursor:pointer;border:none;font-family:inherit;font-size:12px;font-weight:600}
 .pb i{font-size:22px}
-.pbe{background:var(--green);color:#fff}
-.pbip{background:var(--amber);color:#fff}
-.pbfp{background:var(--blue);color:#fff}
-.pbs{background:var(--red);color:#fff}
+.pbe{background:#2D7D3A;color:#fff}
+.pbip{background:#BA7517;color:#fff}
+.pbfp{background:#185FA5;color:#fff}
+.pbs{background:#C0392B;color:#fff}
 .tb{background:var(--grenl);border:1px solid var(--border);border-radius:8px;padding:10px 14px;display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem}
-/* RECIBOS */
 .ri{border:1px solid var(--border);border-radius:8px;padding:10px 14px;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between}
-.rec-doc{background:#f9f8f5;border:1px solid var(--border);border-radius:8px;padding:1rem;margin-bottom:1rem}
 .step-row{display:flex;align-items:center;gap:6px;margin-bottom:1rem;font-size:12px;color:var(--text2)}
 .sd{width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;flex-shrink:0}
 .sdone{background:var(--grenl);color:var(--green)}
@@ -91,38 +73,27 @@ tr:hover td{background:var(--bg)}
 .spend{background:#eee;color:#aaa}
 .sl2{width:20px;height:1px;background:var(--border)}
 canvas{border:1px solid var(--border);border-radius:8px;cursor:crosshair;display:block;width:100%;background:#fff}
-/* FICHA */
 .fsec{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;color:var(--text2);padding:6px 10px;border-bottom:1px solid var(--border);margin-bottom:4px;display:flex;align-items:center;gap:6px}
 .fr{display:flex;padding:6px 10px;font-size:13px;border-bottom:1px solid #f5f4f0}
 .fr:last-child{border-bottom:none}
 .fl{color:var(--text2);width:160px;flex-shrink:0;font-weight:500}
-.fv{color:var(--text)}
-/* FORM */
 .fg{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.fi2{display:flex;flex-direction:column;gap:4px}
-.fi2 label{font-size:12px;font-weight:500;color:var(--text2)}
-.fi2 input,.fi2 select,.fi2 textarea{font-size:13px;background:#f9f8f5;border:1px solid var(--border);border-radius:8px;padding:8px 10px;font-family:inherit;outline:none;width:100%}
-.fi2 input:focus,.fi2 select:focus{border-color:var(--blue)}
-/* MODAL */
-.mo{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.5);z-index:999;display:none;align-items:center;justify-content:center}
-.mb{background:var(--card);border-radius:var(--r);padding:2rem;max-width:440px;width:90%}
-.mt{font-size:17px;font-weight:600;margin-bottom:1rem}
-.mbt{display:flex;gap:8px;justify-content:flex-end;margin-top:1rem}
-/* MISC */
-.hidden{display:none!important}
 .info{background:var(--blu);border:1px solid #B5D4F4;border-radius:8px;padding:10px 14px;font-size:13px;color:var(--blue);margin-bottom:1rem}
 .ok-box{background:var(--grenl);border:1px solid var(--border);border-radius:8px;padding:10px 14px;display:flex;align-items:center;gap:10px}
-@media(max-width:768px){.sb{transform:translateX(-100%);transition:.3s}.sb.open{transform:translateX(0)}.mn{margin-left:0}.mh{display:flex}}
+.mo{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.5);z-index:999;display:none;align-items:center;justify-content:center}
+.mb{background:var(--card);border-radius:var(--r);padding:2rem;max-width:440px;width:90%;position:relative}
+.mc{position:absolute;top:12px;right:12px;background:none;border:none;font-size:22px;cursor:pointer;color:var(--text2);line-height:1}
+.mbt{display:flex;gap:8px;justify-content:flex-end;margin-top:1rem}
+.hidden{display:none!important}
+@media(max-width:768px){.sb{transform:translateX(-100%);transition:.3s}.sb.open{transform:translateX(0)}.mn{margin-left:0;padding:1rem}}
 </style>
 </head>
 <body>
 
-<!-- LOGIN -->
 <div class="lw" id="loginWrap">
   <div class="lc">
-    <div class="ll"><div style="font-size:20px;font-weight:900;color:#185FA5;letter-spacing:-1px;">FORTIX<span style="color:#BA7517;">.</span></div></div>
-    <div class="lt">Portal do Colaborador</div>
-    <div class="ls">Aceda com o seu NIF e senha</div>
+    <div class="lt">FORTIX<span style="color:var(--amber)">.</span></div>
+    <div class="ls">Portal do Colaborador</div>
     <div class="fi"><label>NIF</label><input type="text" id="lNif" placeholder="123456789" maxlength="9"/></div>
     <div class="fi"><label>Senha</label><input type="password" id="lPwd" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()"/></div>
     <button class="bp" onclick="doLogin()">Entrar</button>
@@ -130,12 +101,9 @@ canvas{border:1px solid var(--border);border-radius:8px;cursor:crosshair;display
   </div>
 </div>
 
-<!-- PORTAL -->
 <div class="pw" id="portalWrap">
-
-  <!-- SIDEBAR -->
   <div class="sb" id="sidebar">
-    <div class="sb-logo"><div style="font-size:20px;font-weight:900;color:#185FA5;letter-spacing:-1px;">FORTIX<span style="color:#BA7517;">.</span></div></div>
+    <div class="sb-logo">FORTIX<span style="color:var(--amber)">.</span></div>
     <div class="sb-user">
       <div class="sb-av" id="sbAv">?</div>
       <div><div class="sb-name" id="sbName">—</div><div class="sb-role" id="sbRole">—</div></div>
@@ -156,14 +124,10 @@ canvas{border:1px solid var(--border);border-radius:8px;cursor:crosshair;display
     <div class="nl" onclick="doLogout()"><i class="ti ti-logout"></i> Sair</div>
   </div>
 
-  <!-- MAIN -->
-  <div class="mn" id="mainArea">
-    <div class="mh"><span class="hb" onclick="document.getElementById('sidebar').classList.toggle('open')"><i class="ti ti-menu-2"></i></span><div style="font-size:20px;font-weight:900;color:#185FA5;letter-spacing:-1px;">FORTIX<span style="color:#BA7517;">.</span></div></div>
-
-    <!-- DASHBOARD -->
+  <div class="mn">
     <div id="p-dash">
       <div class="pt" id="dashTitle">Bem-vindo! 👋</div>
-      <div class="ps" id="dashSub">Portal Fortix Solutions</div>
+      <div class="ps">Portal Fortix Solutions</div>
       <div class="sg">
         <div class="sc"><div class="si">🕐</div><div class="sl">Registos ponto</div><div class="sv" id="stPonto">—</div></div>
         <div class="sc"><div class="si">📄</div><div class="sl">Recibos</div><div class="sv" id="stRecibos">—</div></div>
@@ -176,7 +140,6 @@ canvas{border:1px solid var(--border);border-radius:8px;cursor:crosshair;display
       </div>
     </div>
 
-    <!-- PONTO -->
     <div id="p-ponto" class="hidden">
       <div class="pt">Folha de ponto</div>
       <div class="ps">Registe entradas, pausas e saídas</div>
@@ -201,12 +164,11 @@ canvas{border:1px solid var(--border);border-radius:8px;cursor:crosshair;display
       </div>
     </div>
 
-    <!-- RECIBOS -->
     <div id="p-recibos" class="hidden">
       <div id="recLista">
         <div class="pt">Recibos de vencimento</div>
         <div class="ps">Visualize e assine os seus recibos mensais</div>
-        <div class="info"><i class="ti ti-info-circle"></i> Clique em "Ver e assinar" para abrir o recibo. A assinatura só fica disponível após confirmar a leitura.</div>
+        <div class="info"><i class="ti ti-info-circle"></i> Clique em "Ver e assinar". A assinatura só aparece após confirmar a leitura.</div>
         <div class="cd"><div id="recibosLista"><p style="color:var(--text2);font-size:13px;text-align:center;padding:1rem">Sem recibos</p></div></div>
       </div>
       <div id="recViewer" class="hidden">
@@ -216,11 +178,379 @@ canvas{border:1px solid var(--border);border-radius:8px;cursor:crosshair;display
         </div>
         <div class="step-row">
           <div class="sd sact" id="rs1">1</div><span>Visualizar</span>
-          <div class="sl2"></div>
-          <div class="sd spend" id="rs2">2</div><span>Assinar</span>
-          <div class="sl2"></div>
-          <div class="sd spend" id="rs3"><i class="ti ti-check" style="font-size:9px"></i></div><span>Concluído</span>
+          <div class="sl2"></div><div class="sd spend" id="rs2">2</div><span>Assinar</span>
+          <div class="sl2"></div><div class="sd spend" id="rs3"><i class="ti ti-check" style="font-size:9px"></i></div><span>Concluído</span>
         </div>
         <div class="cd">
-          <div class="rec-doc" id="recDocContent"></div>
-          <div id="recBtnConfirmar" style="text-align:center;margin-bott
+          <div style="background:#f9f8f5;border:1px solid var(--border);border-radius:8px;padding:1rem;margin-bottom:1rem" id="recDocContent"></div>
+          <div id="recBtnConf" style="text-align:center;margin-bottom:1rem">
+            <button class="bs bb" onclick="confirmarLeitura()"><i class="ti ti-check"></i> Confirmo que li o recibo</button>
+          </div>
+          <div id="recSigArea" class="hidden">
+            <div style="font-size:13px;font-weight:500;color:var(--text2);margin-bottom:8px"><i class="ti ti-pencil"></i> Assine com o dedo ou rato</div>
+            <canvas id="sigCanvas" height="120" style="height:120px"></canvas>
+            <div style="display:flex;gap:8px;margin-top:8px;justify-content:flex-end">
+              <button class="bs" onclick="clrSig()">Limpar</button>
+              <button class="bs bb" onclick="saveSig()"><i class="ti ti-check"></i> Confirmar assinatura</button>
+            </div>
+          </div>
+          <div id="recSigOk" class="hidden ok-box">
+            <i class="ti ti-circle-check" style="font-size:24px;color:var(--green)"></i>
+            <div><div style="font-size:14px;font-weight:600;color:var(--green)">Recibo assinado!</div><div id="recSigData" style="font-size:12px;color:var(--text2)">—</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="p-docs" class="hidden">
+      <div class="pt">Documentos da empresa</div>
+      <div class="ps">Regulamentos, contratos e outros documentos</div>
+      <div class="cd"><div id="docsGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px"><p style="color:var(--text2);font-size:13px;text-align:center;padding:1rem;grid-column:1/-1">Sem documentos</p></div></div>
+    </div>
+
+    <div id="p-ficha" class="hidden">
+      <div class="pt">Minha ficha</div>
+      <div class="ps">Os seus dados no portal</div>
+      <div class="cd" id="fichaContent"></div>
+      <div style="background:var(--blu);border:1px solid #B5D4F4;border-radius:8px;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;margin-top:1rem">
+        <div><div style="font-size:14px;font-weight:600;color:var(--blue)">Precisa de atualizar dados?</div><div style="font-size:12px;color:var(--text2)">Submeta um pedido à administração</div></div>
+        <a href="https://fortix-solutions.github.io/Ficha-Colaborador-Fortix/" target="_blank" class="bs bb" style="text-decoration:none;display:inline-flex;align-items:center;gap:6px"><i class="ti ti-edit"></i> Pedir atualização</a>
+      </div>
+    </div>
+
+    <div id="p-acolab" class="hidden">
+      <div class="pt">Gestão de colaboradores</div>
+      <div class="ps">Login = NIF · Senha provisória · Troca obrigatória no 1.º acesso</div>
+      <div class="cd">
+        <div class="ch"><div class="ct">Colaboradores</div><button class="bs bb" onclick="showModal('modalColab')">+ Novo colaborador</button></div>
+        <div id="aColabLista"><p style="color:var(--text2);font-size:13px;text-align:center;padding:1rem">A carregar...</p></div>
+      </div>
+    </div>
+
+    <div id="p-apontos" class="hidden">
+      <div class="pt">Relatório de ponto</div>
+      <div class="ps">Todos os registos de todos os colaboradores</div>
+      <div class="cd"><div id="aPontosLista"><p style="color:var(--text2);font-size:13px;text-align:center;padding:1rem">Sem registos</p></div></div>
+    </div>
+
+    <div id="p-arecibos" class="hidden">
+      <div class="pt">Carregar recibos</div>
+      <div class="ps">Envie recibos para os colaboradores</div>
+      <div class="cd" style="max-width:500px">
+        <div class="fi"><label>Colaborador</label><select id="aRColabSel"></select></div>
+        <div class="fg" style="margin-bottom:10px">
+          <div class="fi"><label>Mês</label><select id="aRMes"><option>Janeiro</option><option>Fevereiro</option><option>Março</option><option>Abril</option><option selected>Maio</option><option>Junho</option><option>Julho</option><option>Agosto</option><option>Setembro</option><option>Outubro</option><option>Novembro</option><option>Dezembro</option></select></div>
+          <div class="fi"><label>Ano</label><input type="number" id="aRAno" value="2026" min="2020"/></div>
+        </div>
+        <div class="fi"><label>Link do recibo</label><input type="text" id="aRUrl" placeholder="https://drive.google.com/..."/></div>
+        <button class="bs bb" onclick="carregarRecibo()">Carregar recibo</button>
+        <div id="aRMsg" style="margin-top:8px;font-size:13px"></div>
+      </div>
+    </div>
+
+    <div id="p-adocs" class="hidden">
+      <div class="pt">Publicar documentos</div>
+      <div class="ps">Partilhe documentos com todos os colaboradores</div>
+      <div class="cd" style="max-width:500px">
+        <div class="fi"><label>Título</label><input type="text" id="aDTit" placeholder="Ex: Regulamento Interno"/></div>
+        <div class="fi"><label>Descrição</label><input type="text" id="aDDesc" placeholder="Breve descrição..."/></div>
+        <div class="fi"><label>Link do documento</label><input type="text" id="aDUrl" placeholder="https://drive.google.com/..."/></div>
+        <button class="bs bb" onclick="publicarDoc()">Publicar documento</button>
+        <div id="aDMsg" style="margin-top:8px;font-size:13px"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="mo" id="modalColab">
+  <div class="mb">
+    <button class="mc" onclick="closeModal('modalColab')">&#x2715;</button>
+    <div style="font-size:17px;font-weight:600;margin-bottom:1rem">Novo Colaborador</div>
+    <div class="fg">
+      <div class="fi" style="grid-column:1/-1"><label>Nome completo *</label><input type="text" id="nNome" placeholder="João Silva"/></div>
+      <div class="fi"><label>NIF (login) *</label><input type="text" id="nNif" placeholder="123456789" maxlength="9"/></div>
+      <div class="fi"><label>Senha provisória *</label><input type="text" id="nSenha" placeholder="Ex: fortix123"/></div>
+      <div class="fi"><label>Email</label><input type="email" id="nEmail" placeholder="joao@fortix.pt"/></div>
+      <div class="fi"><label>Cargo</label><input type="text" id="nCargo" placeholder="Ex: Técnico"/></div>
+      <div class="fi"><label>Departamento</label><input type="text" id="nDepto" placeholder="Ex: Operações"/></div>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px;margin:10px 0;font-size:13px"><input type="checkbox" id="nIsAdm" style="width:15px;height:15px"/> <label for="nIsAdm">É administrador?</label></div>
+    <div id="nColabMsg" style="font-size:13px;color:var(--red);min-height:18px"></div>
+    <div class="mbt">
+      <button class="bs" onclick="closeModal('modalColab')">Cancelar</button>
+      <button class="bs bb" onclick="criarColab()">Criar colaborador</button>
+    </div>
+  </div>
+</div>
+
+<div class="mo" id="modalSenha">
+  <div class="mb">
+    <div style="font-size:17px;font-weight:600;margin-bottom:8px"><i class="ti ti-lock"></i> Troca de senha obrigatória</div>
+    <p style="font-size:13px;color:var(--text2);margin-bottom:1rem">Primeiro acesso — defina uma senha pessoal.</p>
+    <div class="fi"><label>Nova senha (mín. 6 caracteres)</label><input type="password" id="ts1" placeholder="Nova senha"/></div>
+    <div class="fi"><label>Confirmar senha</label><input type="password" id="ts2" placeholder="Repita a senha"/></div>
+    <div id="tsErr" style="font-size:13px;color:var(--red);min-height:18px"></div>
+    <button class="bs bb" style="width:100%;margin-top:8px" onclick="trocarSenha()">Definir senha e entrar</button>
+  </div>
+</div>
+
+<script>
+const SB_URL='https://wbriqlcqfgnpjbxesmdc.supabase.co';
+const SB_KEY='sb_publishable_T2GYe2-5dVrXLWZasUzPZQ_DnS7k-27';
+const sb=supabase.createClient(SB_URL,SB_KEY);
+let cu=null,clkInt=null,sigCtx,sigCvs,drawing=false,curRec=null;
+
+async function doLogin(){
+  const nif=document.getElementById('lNif').value.trim();
+  const pwd=document.getElementById('lPwd').value;
+  const err=document.getElementById('lErr');
+  err.style.display='none';
+  if(!nif||!pwd){err.textContent='Preencha NIF e senha.';err.style.display='block';return;}
+  const{data,error}=await sb.from('colaboradores').select('*').eq('nif',nif).eq('senha',pwd).eq('ativo',true).single();
+  if(error||!data){err.style.display='block';return;}
+  cu=data;localStorage.setItem('fx_user',JSON.stringify(data));iniciarPortal();
+}
+
+function iniciarPortal(){
+  document.getElementById('loginWrap').style.display='none';
+  document.getElementById('portalWrap').style.display='block';
+  document.getElementById('sbAv').textContent=cu.nome.charAt(0).toUpperCase();
+  document.getElementById('sbName').textContent=cu.nome;
+  document.getElementById('sbRole').textContent=cu.cargo||'Colaborador';
+  document.getElementById('dashTitle').textContent='Bem-vindo, '+cu.nome+'! 👋';
+  if(cu.is_admin)document.getElementById('admNav').classList.remove('hidden');
+  if(cu.troca_senha)showModal('modalSenha');
+  startClock();showP('dash');loadDashboard();
+}
+
+async function trocarSenha(){
+  const n1=document.getElementById('ts1').value;
+  const n2=document.getElementById('ts2').value;
+  const err=document.getElementById('tsErr');
+  if(!n1||n1.length<6){err.textContent='Mínimo 6 caracteres.';return;}
+  if(n1!==n2){err.textContent='As senhas não coincidem.';return;}
+  await sb.from('colaboradores').update({senha:n1,troca_senha:false}).eq('id',cu.id);
+  cu.senha=n1;cu.troca_senha=false;localStorage.setItem('fx_user',JSON.stringify(cu));
+  closeModal('modalSenha');
+}
+
+function doLogout(){
+  cu=null;localStorage.removeItem('fx_user');
+  document.getElementById('loginWrap').style.display='flex';
+  document.getElementById('portalWrap').style.display='none';
+  if(clkInt)clearInterval(clkInt);
+}
+
+function startClock(){
+  function tick(){
+    const now=new Date();
+    const cl=document.getElementById('clkDisp');
+    const cd=document.getElementById('clkDate');
+    if(cl)cl.textContent=now.toLocaleTimeString('pt-PT');
+    if(cd)cd.textContent=now.toLocaleDateString('pt-PT',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+  }
+  tick();if(clkInt)clearInterval(clkInt);clkInt=setInterval(tick,1000);
+}
+
+function showP(page){
+  ['dash','ponto','recibos','docs','ficha','acolab','apontos','arecibos','adocs'].forEach(p=>{
+    const el=document.getElementById('p-'+p);if(el)el.classList.add('hidden');
+    const n=document.getElementById('n-'+p);if(n)n.classList.remove('active');
+  });
+  const el=document.getElementById('p-'+page);if(el)el.classList.remove('hidden');
+  const nav=document.getElementById('n-'+page);if(nav)nav.classList.add('active');
+  if(page==='ponto')loadPonto();
+  if(page==='recibos')loadRecibos();
+  if(page==='docs')loadDocs();
+  if(page==='ficha')loadFicha();
+  if(page==='acolab')loadAColab();
+  if(page==='apontos')loadAPontos();
+  if(page==='arecibos')loadARForm();
+  if(page==='dash')loadDashboard();
+}
+
+async function loadDashboard(){
+  if(!cu)return;
+  const{count:rc}=await sb.from('recibos').select('*',{count:'exact',head:true}).eq('colaborador_id',cu.id);
+  const{count:dc}=await sb.from('documentos').select('*',{count:'exact',head:true});
+  const{data:pts}=await sb.from('ponto').select('*').eq('colaborador_id',cu.id).order('data',{ascending:false}).limit(5);
+  document.getElementById('stRecibos').textContent=rc||0;
+  document.getElementById('stDocs').textContent=dc||0;
+  if(pts&&pts.length){document.getElementById('stPonto').textContent=pts.length;document.getElementById('dashPonto').innerHTML=renderPontoTable(pts);}
+}
+
+function timeToMin(t){if(!t)return 0;const p=t.split(':');return parseInt(p[0])*60+parseInt(p[1]);}
+
+async function regP(tipo){
+  const now=new Date();
+  const data=now.toISOString().split('T')[0];
+  const hora=now.toTimeString().substring(0,5);
+  const msg=document.getElementById('pMsg');
+  const{data:ex}=await sb.from('ponto').select('*').eq('colaborador_id',cu.id).eq('data',data).single();
+  let txt='';
+  if(tipo==='entrada'&&!ex){await sb.from('ponto').insert({colaborador_id:cu.id,data,entrada:hora});txt='✅ Entrada às '+hora;}
+  else if(tipo==='inicio_pausa'&&ex&&!ex.inicio_pausa){await sb.from('ponto').update({inicio_pausa:hora}).eq('id',ex.id);txt='⏸ Pausa iniciada às '+hora;}
+  else if(tipo==='fim_pausa'&&ex&&ex.inicio_pausa&&!ex.fim_pausa){await sb.from('ponto').update({fim_pausa:hora}).eq('id',ex.id);txt='▶ Pausa terminada às '+hora;}
+  else if(tipo==='saida'&&ex&&!ex.saida){
+    const pm=ex.inicio_pausa&&ex.fim_pausa?timeToMin(ex.fim_pausa)-timeToMin(ex.inicio_pausa):0;
+    const tot=timeToMin(hora)-timeToMin(ex.entrada)-pm;
+    const th=Math.floor(tot/60)+'h'+String(tot%60).padStart(2,'0');
+    await sb.from('ponto').update({saida:hora,total_horas:th}).eq('id',ex.id);
+    document.getElementById('totHoje').textContent=th;txt='✅ Saída às '+hora+' · Total: '+th;
+  }else{txt='⚠️ Verifique a ordem dos registos';}
+  msg.textContent=txt;setTimeout(()=>{msg.textContent='';},4000);loadPonto();
+}
+
+async function loadPonto(){
+  const{data}=await sb.from('ponto').select('*').eq('colaborador_id',cu.id).order('data',{ascending:false}).limit(20);
+  document.getElementById('pontoHist').innerHTML=data&&data.length?renderPontoTable(data):'<p style="color:var(--text2);font-size:13px;text-align:center;padding:1rem">Sem registos</p>';
+}
+
+function renderPontoTable(rows){
+  return '<table><thead><tr><th>Data</th><th>Entrada</th><th>Início pausa</th><th>Fim pausa</th><th>Saída</th><th>Total</th></tr></thead><tbody>'+
+    rows.map(r=>'<tr><td>'+r.data+'</td><td>'+(r.entrada||'—')+'</td><td>'+(r.inicio_pausa||'—')+'</td><td>'+(r.fim_pausa||'—')+'</td><td>'+(r.saida||'—')+'</td><td>'+(r.total_horas?'<span class="badge bg2">'+r.total_horas+'</span>':'—')+'</td></tr>').join('')+'</tbody></table>';
+}
+
+async function loadRecibos(){
+  const{data}=await sb.from('recibos').select('*').eq('colaborador_id',cu.id).order('ano',{ascending:false});
+  const el=document.getElementById('recibosLista');
+  if(!data||!data.length){el.innerHTML='<p style="color:var(--text2);font-size:13px;text-align:center;padding:1rem">Sem recibos</p>';return;}
+  el.innerHTML=data.map(r=>'<div class="ri"><div><div style="font-size:14px;font-weight:600">'+r.mes+' '+r.ano+'</div><div style="margin-top:4px">'+(r.assinado?'<span class="badge bg2">✓ Assinado</span>':'<span class="badge br2">Não assinado</span>')+'</div></div><div style="display:flex;gap:8px">'+(r.ficheiro_url?'<a href="'+r.ficheiro_url+'" target="_blank" class="bs" style="text-decoration:none;font-size:13px;padding:6px 12px;display:inline-flex;align-items:center;gap:5px"><i class="ti ti-download"></i> Abrir</a>':'')+(!r.assinado?'<button class="bs bb" onclick="abrirRec(\''+r.id+'\',\''+r.mes+' '+r.ano+'\',\''+r.ficheiro_url+'\')"><i class="ti ti-pencil"></i> Ver e assinar</button>':'')+'</div></div>').join('');
+}
+
+function showRecLista(){document.getElementById('recLista').classList.remove('hidden');document.getElementById('recViewer').classList.add('hidden');}
+
+function abrirRec(id,titulo,url){
+  curRec=id;
+  document.getElementById('recLista').classList.add('hidden');
+  document.getElementById('recViewer').classList.remove('hidden');
+  document.getElementById('recViewTitle').textContent=titulo;
+  document.getElementById('recBtnConf').classList.remove('hidden');
+  document.getElementById('recSigArea').classList.add('hidden');
+  document.getElementById('recSigOk').classList.add('hidden');
+  document.getElementById('rs1').className='sd sact';
+  document.getElementById('rs2').className='sd spend';
+  document.getElementById('rs3').className='sd spend';
+  document.getElementById('recDocContent').innerHTML='<div style="text-align:center;padding:1rem"><div style="font-size:16px;font-weight:700;color:var(--blue);margin-bottom:4px">FORTIX SOLUTIONS, LDA</div><div style="font-size:12px;color:var(--text2);margin-bottom:1rem">'+titulo+'</div>'+(url&&url!=='null'?'<a href="'+url+'" target="_blank" class="bs bb" style="text-decoration:none;display:inline-flex;align-items:center;gap:6px"><i class="ti ti-external-link"></i> Abrir documento completo</a>':'<p style="color:var(--text2);font-size:13px">Sem link disponível</p>')+'</div>';
+}
+
+function confirmarLeitura(){
+  document.getElementById('recBtnConf').classList.add('hidden');
+  document.getElementById('recSigArea').classList.remove('hidden');
+  document.getElementById('rs1').className='sd sdone';document.getElementById('rs2').className='sd sact';
+  sigCvs=document.getElementById('sigCanvas');sigCtx=sigCvs.getContext('2d');
+  sigCvs.width=sigCvs.offsetWidth;sigCtx.lineWidth=2;sigCtx.lineCap='round';sigCtx.strokeStyle='#1a1a18';
+  sigCvs.onmousedown=e=>{drawing=true;sigCtx.beginPath();sigCtx.moveTo(e.offsetX,e.offsetY);};
+  sigCvs.onmousemove=e=>{if(drawing){sigCtx.lineTo(e.offsetX,e.offsetY);sigCtx.stroke();}};
+  sigCvs.onmouseup=()=>drawing=false;sigCvs.onmouseleave=()=>drawing=false;
+  sigCvs.ontouchstart=e=>{e.preventDefault();drawing=true;const r=sigCvs.getBoundingClientRect();const t=e.touches[0];sigCtx.beginPath();sigCtx.moveTo(t.clientX-r.left,t.clientY-r.top);};
+  sigCvs.ontouchmove=e=>{e.preventDefault();if(drawing){const r=sigCvs.getBoundingClientRect();const t=e.touches[0];sigCtx.lineTo(t.clientX-r.left,t.clientY-r.top);sigCtx.stroke();}};
+  sigCvs.ontouchend=()=>drawing=false;
+}
+
+function clrSig(){if(sigCtx)sigCtx.clearRect(0,0,sigCvs.width,sigCvs.height);}
+
+async function saveSig(){
+  const img=sigCvs.toDataURL();const now=new Date();
+  await sb.from('assinaturas_recibos').insert({recibo_id:curRec,colaborador_id:cu.id,assinatura_img:img});
+  await sb.from('recibos').update({assinado:true}).eq('id',curRec);
+  document.getElementById('recSigArea').classList.add('hidden');
+  document.getElementById('recSigOk').classList.remove('hidden');
+  document.getElementById('recSigData').textContent='Assinado em '+now.toLocaleDateString('pt-PT')+' às '+now.toLocaleTimeString('pt-PT',{hour:'2-digit',minute:'2-digit'});
+  document.getElementById('rs2').className='sd sdone';document.getElementById('rs3').className='sd sdone';
+}
+
+async function loadDocs(){
+  const{data}=await sb.from('documentos').select('*').order('criado_em',{ascending:false});
+  const el=document.getElementById('docsGrid');
+  if(!data||!data.length){el.innerHTML='<p style="color:var(--text2);font-size:13px;text-align:center;padding:1rem;grid-column:1/-1">Sem documentos</p>';return;}
+  el.innerHTML=data.map(d=>'<div onclick="window.open(\''+d.ficheiro_url+'\',\'_blank\')" style="border:1px solid var(--border);border-radius:10px;padding:1rem;cursor:pointer"><i class="ti ti-file-description" style="font-size:28px;color:var(--blue);display:block;margin-bottom:8px"></i><div style="font-size:14px;font-weight:600;margin-bottom:4px">'+d.titulo+'</div><div style="font-size:12px;color:var(--text2)">'+(d.descricao||'')+'</div></div>').join('');
+}
+
+async function loadFicha(){
+  const u=cu;
+  document.getElementById('fichaContent').innerHTML=
+    '<div class="fsec"><i class="ti ti-briefcase"></i> Dados profissionais</div>'+
+    '<div class="fr"><span class="fl">Nome</span><span>'+u.nome+'</span></div>'+
+    '<div class="fr"><span class="fl">NIF</span><span>'+u.nif+'</span></div>'+
+    '<div class="fr"><span class="fl">Email</span><span>'+(u.email||'—')+'</span></div>'+
+    '<div class="fr"><span class="fl">Cargo</span><span>'+(u.cargo||'—')+'</span></div>'+
+    '<div class="fr"><span class="fl">Departamento</span><span>'+(u.departamento||'—')+'</span></div>'+
+    '<div class="fr"><span class="fl">Data admissão</span><span>'+(u.data_admissao||'—')+'</span></div>';
+}
+
+async function loadAColab(){
+  const{data}=await sb.from('colaboradores').select('*').order('nome');
+  const el=document.getElementById('aColabLista');
+  if(!data||!data.length){el.innerHTML='<p style="color:var(--text2);font-size:13px;text-align:center;padding:1rem">Sem colaboradores</p>';return;}
+  el.innerHTML='<table><thead><tr><th>Nome</th><th>NIF</th><th>Cargo</th><th>1.º login</th><th>Admin</th><th>Estado</th></tr></thead><tbody>'+
+    data.map(c=>'<tr><td><strong>'+c.nome+'</strong></td><td>'+c.nif+'</td><td>'+(c.cargo||'—')+'</td><td>'+(c.troca_senha?'<span class="badge br2">Pendente</span>':'<span class="badge bg2">✓ Trocada</span>')+'</td><td>'+(c.is_admin?'<span class="badge ba2">Sim</span>':'Não')+'</td><td>'+(c.ativo?'<span class="badge bg2">Ativo</span>':'<span class="badge br2">Inativo</span>')+'</td></tr>').join('')+'</tbody></table>';
+}
+
+async function criarColab(){
+  const nome=document.getElementById('nNome').value.trim();
+  const nif=document.getElementById('nNif').value.trim();
+  const email=document.getElementById('nEmail').value.trim();
+  const senha=document.getElementById('nSenha').value;
+  const cargo=document.getElementById('nCargo').value.trim();
+  const depto=document.getElementById('nDepto').value.trim();
+  const isAdm=document.getElementById('nIsAdm').checked;
+  const msg=document.getElementById('nColabMsg');
+  if(!nome||!nif||!senha){msg.textContent='Nome, NIF e senha são obrigatórios.';return;}
+  const{error}=await sb.from('colaboradores').insert({nome,nif,email,senha,cargo,departamento:depto,is_admin:isAdm});
+  if(error){msg.textContent='Erro: '+(error.message||'NIF já existe');return;}
+  closeModal('modalColab');['nNome','nNif','nEmail','nSenha','nCargo','nDepto'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('nIsAdm').checked=false;loadAColab();
+}
+
+async function loadAPontos(){
+  const{data}=await sb.from('ponto').select('*,colaboradores(nome)').order('data',{ascending:false}).limit(50);
+  const el=document.getElementById('aPontosLista');
+  if(!data||!data.length){el.innerHTML='<p style="color:var(--text2);font-size:13px;text-align:center;padding:1rem">Sem registos</p>';return;}
+  el.innerHTML='<table><thead><tr><th>Colaborador</th><th>Data</th><th>Entrada</th><th>Início pausa</th><th>Fim pausa</th><th>Saída</th><th>Total</th></tr></thead><tbody>'+
+    data.map(r=>'<tr><td>'+(r.colaboradores?.nome||'—')+'</td><td>'+r.data+'</td><td>'+(r.entrada||'—')+'</td><td>'+(r.inicio_pausa||'—')+'</td><td>'+(r.fim_pausa||'—')+'</td><td>'+(r.saida||'—')+'</td><td>'+(r.total_horas?'<span class="badge bg2">'+r.total_horas+'</span>':'—')+'</td></tr>').join('')+'</tbody></table>';
+}
+
+async function loadARForm(){
+  const{data}=await sb.from('colaboradores').select('id,nome').order('nome');
+  const sel=document.getElementById('aRColabSel');
+  sel.innerHTML=(data||[]).map(c=>'<option value="'+c.id+'">'+c.nome+'</option>').join('');
+}
+
+async function carregarRecibo(){
+  const cid=document.getElementById('aRColabSel').value;
+  const mes=document.getElementById('aRMes').value;
+  const ano=parseInt(document.getElementById('aRAno').value);
+  const url=document.getElementById('aRUrl').value.trim();
+  const msg=document.getElementById('aRMsg');
+  if(!url){msg.style.color='var(--red)';msg.textContent='Introduza o link do recibo.';return;}
+  const{error}=await sb.from('recibos').insert({colaborador_id:cid,mes,ano,ficheiro_url:url});
+  if(error){msg.style.color='var(--red)';msg.textContent='Erro: '+error.message;return;}
+  msg.style.color='var(--green)';msg.textContent='Recibo carregado com sucesso!';
+  document.getElementById('aRUrl').value='';setTimeout(()=>{msg.textContent='';},3000);
+}
+
+async function publicarDoc(){
+  const titulo=document.getElementById('aDTit').value.trim();
+  const desc=document.getElementById('aDDesc').value.trim();
+  const url=document.getElementById('aDUrl').value.trim();
+  const msg=document.getElementById('aDMsg');
+  if(!titulo||!url){msg.style.color='var(--red)';msg.textContent='Título e link são obrigatórios.';return;}
+  const{error}=await sb.from('documentos').insert({titulo,descricao:desc,ficheiro_url:url});
+  if(error){msg.style.color='var(--red)';msg.textContent='Erro: '+error.message;return;}
+  msg.style.color='var(--green)';msg.textContent='Documento publicado!';
+  ['aDTit','aDDesc','aDUrl'].forEach(id=>document.getElementById(id).value='');
+  setTimeout(()=>{msg.textContent='';loadDocs();},3000);
+}
+
+function showModal(id){document.getElementById(id).style.display='flex';}
+function closeModal(id){document.getElementById(id).style.display='none';}
+document.querySelectorAll('.mo').forEach(m=>m.addEventListener('click',e=>{if(e.target===m&&m.id!=='modalSenha')m.style.display='none';}));
+
+(function(){
+  const s=localStorage.getItem('fx_user');
+  if(s){try{cu=JSON.parse(s);iniciarPortal();}catch(e){}}
+})();
+</script>
+</body>
+</html>
