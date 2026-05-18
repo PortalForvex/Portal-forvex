@@ -1,0 +1,22 @@
+{
+  "name": "Portal Fortix Solutions",
+  "short_name": "Fortix Portal",
+  "description": "Portal do colaborador Fortix Solutions",
+  "start_url": "/Portal-fortix/",
+  "display": "standalone",
+  "background_color": "#f0f0ee",
+  "theme_color": "#185FA5",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "https://raw.githubusercontent.com/Fortix-solucoes/Portal-fortix/main/LOGO_BRANCA.jpeg",
+      "sizes": "192x192",
+      "type": "image/jpeg"
+    },
+    {
+      "src": "https://raw.githubusercontent.com/Fortix-solucoes/Portal-fortix/main/LOGO_BRANCA.jpeg",
+      "sizes": "512x512",
+      "type": "image/jpeg"
+    }
+  ]
+}
