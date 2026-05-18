@@ -778,6 +778,12 @@ async function toggleAtivo(id, ativo){
   loadAColab();
 }
 
+function editarPontoIdx(i){
+  const r=pontosData[i];
+  if(!r)return;
+  editarPonto(r.id,r.colaboradores?.nome||'',r.data,r.entrada||'',r.inicio_pausa||'',r.fim_pausa||'',r.saida||'');
+}
+
 function editarPonto(id,nome,data,entrada,inicioPausa,fimPausa,saida){
   document.getElementById('epId').value=id;
   document.getElementById('epColabNome').textContent='Colaborador: '+nome;
