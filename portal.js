@@ -13,7 +13,7 @@ async function doLogin(){
   const err=document.getElementById('lErr');
   err.style.display='none';
   if(!nif||!pwd){err.textContent='Preencha NIF e senha.';err.style.display='block';return;}
-  const{data,error}=await sb.from('colaboradores').select('*').eq('nif',nif).eq('senha',pwd).eq('ativo',true).single();
+  const{data,error}=await sb.from('colaboradores').select('*').eq('nif',nif).eq('senha',pwd).eq('ativo',true).maybeSingle();
   if(error||!data){err.style.display='block';return;}
   cu=data;localStorage.setItem('fx_user',JSON.stringify(data));iniciarPortal();
 }
@@ -125,7 +125,7 @@ async function guardarPontoManual(){
     const tot=timeToMin(saida)-timeToMin(entrada)-pm;
     if(tot>0)total_horas=Math.floor(tot/60)+'h'+String(tot%60).padStart(2,'0');
   }
-  const{data:ex}=await sb.from('ponto').select('id').eq('colaborador_id',cu.id).eq('data',data).single();
+  const{data:ex}=await sb.from('ponto').select('id').eq('colaborador_id',cu.id).eq('data',data).maybeSingle();
   if(ex){
     await sb.from('ponto').update({entrada:entrada||null,inicio_pausa:inicio_pausa||null,fim_pausa:fim_pausa||null,saida:saida||null,total_horas}).eq('id',ex.id);
   } else {
@@ -142,7 +142,7 @@ async function regP(tipo){
   const data=now.toISOString().split('T')[0];
   const hora=now.toTimeString().substring(0,5);
   const msg=document.getElementById('pMsg');
-  const{data:ex}=await sb.from('ponto').select('*').eq('colaborador_id',cu.id).eq('data',data).single();
+  const{data:ex}=await sb.from('ponto').select('*').eq('colaborador_id',cu.id).eq('data',data).maybeSingle();
   let txt='';
   if(tipo==='entrada'&&!ex){await sb.from('ponto').insert({colaborador_id:cu.id,data,entrada:hora});txt='✅ Entrada às '+hora;}
   else if(tipo==='inicio_pausa'&&ex&&!ex.inicio_pausa){await sb.from('ponto').update({inicio_pausa:hora}).eq('id',ex.id);txt='⏸ Pausa iniciada às '+hora;}
@@ -161,7 +161,7 @@ async function loadPonto(){
   const today=new Date().toISOString().split('T')[0];
   const mData=document.getElementById('mData');
   if(mData&&!mData.value)mData.value=today;
-  const{data:hoje}=await sb.from('ponto').select('*').eq('colaborador_id',cu.id).eq('data',today).single();
+  const{data:hoje}=await sb.from('ponto').select('*').eq('colaborador_id',cu.id).eq('data',today).maybeSingle();
   if(hoje){
     if(document.getElementById('mEntrada'))document.getElementById('mEntrada').value=hoje.entrada||'';
     if(document.getElementById('mInicioPausa'))document.getElementById('mInicioPausa').value=hoje.inicio_pausa||'';
@@ -357,7 +357,7 @@ async function carregarRecibo(){
 
   const{error}=await sb.from('recibos').insert({colaborador_id:cid,mes,ano,ficheiro_url});
   if(error){msg.style.color='var(--red)';msg.textContent='Erro: '+error.message;return;}
-  const{data:colab}=await sb.from('colaboradores').select('nome,email').eq('id',cid).single();
+  const{data:colab}=await sb.from('colaboradores').select('nome,email').eq('id',cid).maybeSingle();
   if(colab&&colab.email){
     emailjs.send(EJ_SERVICE,'template_9cnwr2b',{
       nome:colab.nome,email_destino:colab.email,
@@ -386,7 +386,7 @@ async function publicarDoc(){
 }
 
 async function verColab(id){
-  const{data}=await sb.from('colaboradores').select('*').eq('id',id).single();
+  const{data}=await sb.from('colaboradores').select('*').eq('id',id).maybeSingle();
   if(!data)return;
   document.getElementById('vNome').textContent=data.nome||'—';
   document.getElementById('vNif').textContent=data.nif||'—';
@@ -401,7 +401,7 @@ async function verColab(id){
 }
 
 async function editarColab(id){
-  const{data}=await sb.from('colaboradores').select('*').eq('id',id).single();
+  const{data}=await sb.from('colaboradores').select('*').eq('id',id).maybeSingle();
   if(!data)return;
   document.getElementById('editId').value=id;
   document.getElementById('editNome').value=data.nome||'';
