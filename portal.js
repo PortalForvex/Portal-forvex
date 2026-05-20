@@ -299,23 +299,40 @@ async function carregarRecibo(){
   const cid=document.getElementById('aRColabSel').value;
   const mes=document.getElementById('aRMes').value;
   const ano=parseInt(document.getElementById('aRAno').value);
-  const url=document.getElementById('aRUrl').value.trim();
   const msg=document.getElementById('aRMsg');
-  if(!url){msg.style.color='var(--red)';msg.textContent='Introduza o link do recibo.';return;}
-  const{error}=await sb.from('recibos').insert({colaborador_id:cid,mes,ano,ficheiro_url:url});
+  const fileInput=document.getElementById('aRFile');
+  const urlInput=document.getElementById('aRUrl');
+  let ficheiro_url='';
+
+  if(fileInput&&fileInput.files&&fileInput.files[0]){
+    const file=fileInput.files[0];
+    const fileName=cid+'_'+mes+'_'+ano+'_'+Date.now()+'.pdf';
+    msg.style.color='var(--blue)';msg.textContent='A carregar PDF...';
+    const{data:upData,error:upErr}=await sb.storage.from('Recibos').upload(fileName,file,{contentType:'application/pdf',upsert:true});
+    if(upErr){msg.style.color='var(--red)';msg.textContent='Erro upload: '+upErr.message;return;}
+    const{data:urlData}=sb.storage.from('Recibos').getPublicUrl(fileName);
+    ficheiro_url=urlData.publicUrl;
+  } else if(urlInput&&urlInput.value.trim()){
+    ficheiro_url=urlInput.value.trim();
+  } else {
+    msg.style.color='var(--red)';msg.textContent='Selecione um PDF ou introduza um link.';return;
+  }
+
+  const{error}=await sb.from('recibos').insert({colaborador_id:cid,mes,ano,ficheiro_url});
   if(error){msg.style.color='var(--red)';msg.textContent='Erro: '+error.message;return;}
   const{data:colab}=await sb.from('colaboradores').select('nome,email').eq('id',cid).single();
   if(colab&&colab.email){
     emailjs.send(EJ_SERVICE,'template_9cnwr2b',{
-      nome:colab.nome,
-      email_destino:colab.email,
+      nome:colab.nome,email_destino:colab.email,
       assunto:'Novo recibo disponível — '+mes+' '+ano,
-      mensagem:'O seu recibo de '+mes+' de '+ano+' já está disponível no portal. Aceda e assine digitalmente.',
+      mensagem:'O seu recibo de '+mes+' de '+ano+' já está disponível no portal.',
       nif:'—',senha:'—'
     }).catch(e=>console.log('Email erro:',e));
   }
   msg.style.color='var(--green)';msg.textContent='✅ Recibo carregado'+(colab?.email?' e email enviado!':'!');
-  document.getElementById('aRUrl').value='';setTimeout(()=>{msg.textContent='';},3000);
+  if(fileInput)fileInput.value='';
+  if(urlInput)urlInput.value='';
+  setTimeout(()=>{msg.textContent='';},3000);
 }
 
 async function publicarDoc(){
@@ -447,6 +464,27 @@ async function loadAssinaturas(){
   el.innerHTML='<table><thead><tr><th>Colaborador</th><th>Recibo</th><th>Data assinatura</th><th>Assinatura</th></tr></thead><tbody>'+
     data.map(a=>'<tr><td>'+(a.colaboradores?.nome||'—')+'</td><td>'+(a.recibos?.mes||'—')+' '+(a.recibos?.ano||'')+'</td><td>'+new Date(a.data_assinatura).toLocaleDateString('pt-PT')+' '+new Date(a.data_assinatura).toLocaleTimeString('pt-PT',{hour:'2-digit',minute:'2-digit'})+'</td><td>'+(a.assinatura_img?'<img src="'+a.assinatura_img+'" style="height:40px;border:1px solid var(--border);border-radius:4px;background:#fff" />':'—')+'</td></tr>').join('')+
     '</tbody></table>';
+}
+
+function exportarPontoExcel(){
+  const el=document.getElementById('aPontosLista')||document.getElementById('pontoHist');
+  const table=el?el.querySelector('table'):null;
+  if(!table){alert('Sem dados para exportar');return;}
+  let csv='Colaborador,Data,Entrada,Início Pausa,Fim Pausa,Saída,Total\n';
+  const rows=table.querySelectorAll('tbody tr');
+  rows.forEach(r=>{
+    const cells=r.querySelectorAll('td');
+    const vals=[];
+    for(let i=0;i<Math.min(cells.length,7);i++){
+      vals.push('"'+(cells[i].textContent.trim().replace(/"/g,"'"))+'"');
+    }
+    csv+=vals.join(',')+('\n');
+  });
+  const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;a.download='ponto_fortix.csv';a.click();
+  URL.revokeObjectURL(url);
 }
 
 function showModal(id){document.getElementById(id).style.display='flex';}
