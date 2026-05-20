@@ -166,7 +166,9 @@ canvas{border:1px solid var(--border);border-radius:8px;cursor:crosshair;display
     </div>
 
     <div id="p-ponto" class="hidden">
-      <div class="pt">Folha de ponto</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+        <div class="pt">Folha de ponto</div>
+      </div>
       <div class="ps">Registe entradas, pausas e saídas</div>
       <div class="sg" style="margin-bottom:1rem">
         <div class="sc"><div class="si">📅</div><div class="sl">Dias trabalhados este mês</div><div class="sv" id="diasMes">—</div></div>
@@ -187,6 +189,23 @@ canvas{border:1px solid var(--border);border-radius:8px;cursor:crosshair;display
           <div style="font-size:20px;font-weight:700;color:var(--green)" id="totHoje">—</div>
         </div>
       </div>
+
+      <div class="cd">
+        <div class="ch"><div class="ct"><i class="ti ti-edit"></i> Registo manual</div></div>
+        <div style="font-size:13px;color:var(--text2);margin-bottom:12px">Preencha manualmente caso se tenha esquecido de bater o ponto.</div>
+        <div class="fg" style="gap:10px;margin-bottom:12px">
+          <div class="fi2"><label>📅 Data</label><input type="date" id="mData"/></div>
+          <div class="fi2"><label>🟢 Entrada</label><input type="time" id="mEntrada"/></div>
+          <div class="fi2"><label>⏸ Início pausa</label><input type="time" id="mInicioPausa"/></div>
+          <div class="fi2"><label>▶ Fim pausa</label><input type="time" id="mFimPausa"/></div>
+          <div class="fi2"><label>🔴 Saída</label><input type="time" id="mSaida"/></div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px">
+          <button class="bs bb" onclick="guardarPontoManual()" style="display:flex;align-items:center;gap:6px"><i class="ti ti-device-floppy"></i> Guardar registo</button>
+          <div id="mMsg" style="font-size:13px;font-weight:500;color:var(--green)"></div>
+        </div>
+      </div>
+
       <div class="cd">
         <div class="ch">
           <div class="ct">Histórico de ponto</div>
