@@ -386,14 +386,32 @@ async function carregarRecibo(){
 async function publicarDoc(){
   const titulo=document.getElementById('aDTit').value.trim();
   const desc=document.getElementById('aDDesc').value.trim();
-  const url=document.getElementById('aDUrl').value.trim();
   const msg=document.getElementById('aDMsg');
-  if(!titulo||!url){msg.style.color='var(--red)';msg.textContent='Título e link são obrigatórios.';return;}
-  const{error}=await sb.from('documentos').insert({titulo,descricao:desc,ficheiro_url:url});
+  const fileInput=document.getElementById('aDFile');
+  const urlInput=document.getElementById('aDUrl');
+  if(!titulo){msg.style.color='var(--red)';msg.textContent='O título é obrigatório.';return;}
+  let ficheiro_url='';
+  if(fileInput&&fileInput.files&&fileInput.files[0]){
+    const file=fileInput.files[0];
+    const fileName='doc_'+Date.now()+'.pdf';
+    msg.style.color='var(--blue)';msg.textContent='A carregar PDF...';
+    const{error:upErr}=await sb.storage.from('Documentos').upload(fileName,file,{contentType:'application/pdf',upsert:true});
+    if(upErr){msg.style.color='var(--red)';msg.textContent='Erro upload: '+upErr.message;return;}
+    const{data:urlData}=sb.storage.from('Documentos').getPublicUrl(fileName);
+    ficheiro_url=urlData.publicUrl;
+  } else if(urlInput&&urlInput.value.trim()){
+    ficheiro_url=urlInput.value.trim();
+  } else {
+    msg.style.color='var(--red)';msg.textContent='Selecione um PDF ou introduza um link.';return;
+  }
+  const{error}=await sb.from('documentos').insert({titulo,descricao:desc,ficheiro_url});
   if(error){msg.style.color='var(--red)';msg.textContent='Erro: '+error.message;return;}
-  msg.style.color='var(--green)';msg.textContent='Documento publicado!';
-  ['aDTit','aDDesc','aDUrl'].forEach(id=>document.getElementById(id).value='');
-  setTimeout(()=>{msg.textContent='';loadDocs();},3000);
+  msg.style.color='var(--green)';msg.textContent='✅ Documento publicado!';
+  document.getElementById('aDTit').value='';
+  document.getElementById('aDDesc').value='';
+  document.getElementById('aDUrl').value='';
+  if(fileInput)fileInput.value='';
+  setTimeout(()=>{msg.textContent='';loadDocs();},2000);
 }
 
 async function verColab(id){
