@@ -334,16 +334,62 @@ async function loadAColab(){
   const{data}=await sb.from('colaboradores').select('*').order('nome');
   const el=document.getElementById('aColabLista');
   if(!data||!data.length){el.innerHTML='<p style="color:var(--text2);font-size:13px;text-align:center;padding:1rem">Sem colaboradores</p>';return;}
-  el.innerHTML='<table><thead><tr><th>Nome</th><th>NIF</th><th>Cargo</th><th>1.º login</th><th>Admin</th><th>Estado</th><th>Ação</th></tr></thead><tbody>'+
-    data.map(c=>{
-      const btnDesativar='<button class="bs" style="font-size:11px;padding:4px 10px;color:var(--red);border-color:#F09595" onclick="toggleAtivo(\'' +c.id+ '\',false)">Desativar</button>';
-      const btnReativar='<button class="bs" style="font-size:11px;padding:4px 10px;color:var(--green);border-color:#9fd3a8" onclick="toggleAtivo(\'' +c.id+ '\',true)">Reativar</button>';
-      const btnEditar='<button class="bs" style="font-size:11px;padding:4px 10px;margin-right:4px;background:var(--amber);color:#fff;border-color:var(--amber)" onclick="editarColab(\'' +c.id+ '\')">Editar</button>';
-      const btnVer='<button class="bs bb" style="font-size:11px;padding:4px 10px;margin-right:4px" onclick="verColab(\'' +c.id+ '\')">Ver dados</button>';
-      const btnExcluir='<button class="bs" style="font-size:11px;padding:4px 10px;color:#fff;background:#C0392B;border-color:#C0392B;margin-left:4px" onclick="excluirColab(\'' +c.id+ '\',\'' +c.nome+ '\')">Excluir</button>';
-      const acao=btnEditar+btnVer+(c.nif!=='000000000'?(c.ativo?btnDesativar:btnReativar)+btnExcluir:'');
-      return '<tr><td><strong>'+c.nome+'</strong></td><td>'+c.nif+'</td><td>'+(c.cargo||'—')+'</td><td>'+(c.troca_senha?'<span class="badge br2">Pendente</span>':'<span class="badge bg2">✓ Trocada</span>')+'</td><td>'+(c.is_admin?'<span class="badge ba2">Sim</span>':'Não')+'</td><td>'+(c.ativo?'<span class="badge bg2">Ativo</span>':'<span class="badge br2">Inativo</span>')+'</td><td>'+acao+'</td></tr>';
-    }).join('')+'</tbody></table>';
+  
+  const pendentes=data.filter(c=>c.ficha_pendente);
+  let html='';
+  
+  if(pendentes.length>0){
+    html+='<div style="background:var(--ambl);border:1px solid #E8C97A;border-radius:8px;padding:10px 14px;margin-bottom:1rem;font-size:13px;color:var(--amber)"><i class="ti ti-alert-triangle"></i> <strong>'+pendentes.length+' colaborador(es)</strong> com ficha pendente de preenchimento ADM.</div>';
+  }
+  
+  html+='<table><thead><tr><th>Nome</th><th>NIF</th><th>Cargo</th><th>Ficha</th><th>1.º login</th><th>Estado</th><th>Ação</th></tr></thead><tbody>';
+  
+  data.forEach(function(c,idx){
+    const btnEditar='<button data-idx="'+idx+'" class="btn-edit-colab" style="font-size:11px;padding:3px 8px;margin-right:3px;background:var(--amber);color:#fff;border:none;border-radius:6px;cursor:pointer">Editar</button>';
+    const btnVer='<button data-idx="'+idx+'" class="btn-ver-colab" style="font-size:11px;padding:3px 8px;margin-right:3px;background:var(--blue);color:#fff;border:none;border-radius:6px;cursor:pointer">Ver</button>';
+    const btnDesativar='<button data-idx="'+idx+'" class="btn-toggle-colab" data-ativo="'+c.ativo+'" style="font-size:11px;padding:3px 8px;margin-right:3px;color:var(--red);border:1px solid #F09595;border-radius:6px;cursor:pointer;background:var(--redl)">'+(c.ativo?'Desativar':'Reativar')+'</button>';
+    const btnExcluir='<button data-idx="'+idx+'" class="btn-del-colab" style="font-size:11px;padding:3px 8px;color:#fff;background:var(--red);border:none;border-radius:6px;cursor:pointer">Excluir</button>';
+    const btnCompletarFicha=c.ficha_pendente?'<button data-idx="'+idx+'" class="btn-completar-ficha" style="font-size:11px;padding:3px 8px;margin-right:3px;background:var(--amber);color:#fff;border:none;border-radius:6px;cursor:pointer"><i class="ti ti-pencil"></i> Completar ficha</button>':'';
+    
+    const fichaBadge=c.ficha_pendente?
+      '<span class="badge ba2">⚠️ Pendente ADM</span>':
+      '<span class="badge bg2">✓ OK</span>';
+    
+    html+='<tr>';
+    html+='<td><strong>'+c.nome+'</strong></td>';
+    html+='<td>'+c.nif+'</td>';
+    html+='<td>'+(c.cargo||'—')+'</td>';
+    html+='<td>'+fichaBadge+'</td>';
+    html+='<td>'+(c.troca_senha?'<span class="badge br2">Pendente</span>':'<span class="badge bg2">✓ Trocada</span>')+'</td>';
+    html+='<td>'+(c.ativo?'<span class="badge bg2">Ativo</span>':'<span class="badge br2">Inativo</span>')+'</td>';
+    html+='<td style="white-space:nowrap">'+btnCompletarFicha+btnVer+(c.nif!=='000000000'?btnEditar+btnDesativar+btnExcluir:'')+'</td>';
+    html+='</tr>';
+  });
+  
+  html+='</tbody></table>';
+  el.innerHTML=html;
+  
+  // Store data for buttons
+  window._colabData=data;
+  
+  el.querySelectorAll('.btn-ver-colab').forEach(function(btn){
+    btn.addEventListener('click',function(){verColab(window._colabData[btn.dataset.idx].id);});
+  });
+  el.querySelectorAll('.btn-edit-colab').forEach(function(btn){
+    btn.addEventListener('click',function(){editarColab(window._colabData[btn.dataset.idx].id);});
+  });
+  el.querySelectorAll('.btn-toggle-colab').forEach(function(btn){
+    btn.addEventListener('click',function(){toggleAtivo(window._colabData[btn.dataset.idx].id,btn.dataset.ativo==='false');});
+  });
+  el.querySelectorAll('.btn-del-colab').forEach(function(btn){
+    btn.addEventListener('click',function(){excluirColab(window._colabData[btn.dataset.idx].id,window._colabData[btn.dataset.idx].nome);});
+  });
+  el.querySelectorAll('.btn-completar-ficha').forEach(function(btn){
+    btn.addEventListener('click',function(){
+      const colab=window._colabData[btn.dataset.idx];
+      window.open('https://fortix-solutions.github.io/Ficha-Colaborador-Fortix/?adm=1&nif='+colab.nif,'_blank');
+    });
+  });
 }
 
 async function criarColab(){
