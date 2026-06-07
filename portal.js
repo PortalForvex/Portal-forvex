@@ -530,18 +530,18 @@ async function eliminarPonto(id){
 async function loadAssinaturas(){
   const{data}=await sb.from('assinaturas_recibos').select('*,colaboradores(nome),recibos(mes,ano,ficheiro_url)').order('data_assinatura',{ascending:false});
   const el=document.getElementById('assLista');
-  if(!data||!data.length){el.innerHTML='<div style="text-align:center;padding:2rem;color:var(--text2)"><i class="ti ti-files" style="font-size:40px;display:block;margin-bottom:10px;opacity:0.4"></i><p style="font-size:14px">Sem recibos assinados</p></div>';return;}
-  
-  // Group by month/year
+  if(!data||!data.length){
+    el.innerHTML='<div style="text-align:center;padding:2rem;color:var(--text2)"><i class="ti ti-files" style="font-size:40px;display:block;margin-bottom:10px;opacity:0.4"></i><p style="font-size:14px">Sem recibos assinados</p></div>';
+    return;
+  }
   const groups={};
-  data.forEach(a=>{
-    const key=(a.recibos?.mes||'—')+' '+(a.recibos?.ano||'');
+  data.forEach(function(a){
+    const key=(a.recibos?a.recibos.mes:'—')+' '+(a.recibos?a.recibos.ano:'');
     if(!groups[key])groups[key]=[];
     groups[key].push(a);
   });
-
   let html='';
-  Object.keys(groups).forEach(key=>{
+  Object.keys(groups).forEach(function(key){
     html+='<div style="margin-bottom:1.5rem">';
     html+='<div style="display:flex;align-items:center;gap:8px;padding:10px 14px;background:var(--blu);border-radius:10px 10px 0 0;border:1px solid var(--border)">';
     html+='<i class="ti ti-folder" style="color:var(--blue);font-size:18px"></i>';
@@ -549,13 +549,13 @@ async function loadAssinaturas(){
     html+='<span class="badge bb2" style="margin-left:auto">'+groups[key].length+' recibo(s)</span>';
     html+='</div>';
     html+='<div style="border:1px solid var(--border);border-top:none;border-radius:0 0 10px 10px;overflow:hidden">';
-    groups[key].forEach((a,i)=>{
+    groups[key].forEach(function(a,i){
       const dataAss=new Date(a.data_assinatura);
       const dataFmt=dataAss.toLocaleDateString('pt-PT')+' às '+dataAss.toLocaleTimeString('pt-PT',{hour:'2-digit',minute:'2-digit'});
       html+='<div style="padding:12px 16px;border-bottom:'+(i<groups[key].length-1?'1px solid #f0ede6':'none')+';display:flex;align-items:center;gap:14px">';
       html+='<div style="flex:1">';
-      html+='<div style="font-size:14px;font-weight:600">'+(a.colaboradores?.nome||'—')+'</div>';
-      html+='<div style="font-size:12px;color:var(--text2);margin-top:2px">✅ Assinado em '+dataFmt+'</div>';
+      html+='<div style="font-size:14px;font-weight:600">'+(a.colaboradores?a.colaboradores.nome:'—')+'</div>';
+      html+='<div style="font-size:12px;color:var(--text2);margin-top:2px">Assinado em '+dataFmt+'</div>';
       html+='</div>';
       if(a.assinatura_img){
         html+='<div style="text-align:center">';
@@ -563,15 +563,18 @@ async function loadAssinaturas(){
         html+='<img src="'+a.assinatura_img+'" style="height:45px;border:1px solid var(--border);border-radius:6px;background:#fff;display:block"/>';
         html+='</div>';
       }
-      html+='<button data-id="'+a.id+'" class="btn-del-ass" style="background:var(--redl);color:var(--red);border:1px solid #F09595;border-radius:7px;padding:5px 10px;font-size:11px;cursor:pointer;display:inline-flex;align-items:center;gap:4px"><i class="ti ti-trash"></i> Excluir</button>';
-      if(a.recibos?.ficheiro_url){
+      if(a.recibos&&a.recibos.ficheiro_url){
         html+='<a href="'+a.recibos.ficheiro_url+'" target="_blank" class="bs bb" style="text-decoration:none;font-size:12px;padding:6px 12px;display:inline-flex;align-items:center;gap:5px"><i class="ti ti-file-text"></i> Ver recibo</a>';
       }
+      html+='<button data-id="'+a.id+'" class="btn-del-ass" style="background:var(--redl);color:var(--red);border:1px solid #F09595;border-radius:7px;padding:5px 10px;font-size:11px;cursor:pointer;display:inline-flex;align-items:center;gap:4px;margin-left:6px"><i class="ti ti-trash"></i> Excluir</button>';
       html+='</div>';
     });
     html+='</div></div>';
   });
   el.innerHTML=html;
+  el.querySelectorAll('.btn-del-ass').forEach(function(btn){
+    btn.addEventListener('click',function(){excluirAssinatura(btn.dataset.id);});
+  });
 }
 
 function exportarPontoExcel(){
