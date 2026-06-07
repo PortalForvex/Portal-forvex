@@ -248,14 +248,18 @@ async function loadDocs(){
   if(!data||!data.length){el.innerHTML='<p style="color:var(--text2);font-size:13px;text-align:center;padding:1rem;grid-column:1/-1">Sem documentos</p>';return;}
   let html='';
   data.forEach(d=>{
-    html+='<div style="border:1px solid var(--border);border-radius:10px;padding:1rem;cursor:pointer">';
+    html+='<div style="border:1px solid var(--border);border-radius:10px;padding:1rem;position:relative">';
     html+='<i class="ti ti-file-description" style="font-size:28px;color:var(--blue);display:block;margin-bottom:8px"></i>';
     html+='<div style="font-size:14px;font-weight:600;margin-bottom:4px">'+d.titulo+'</div>';
     html+='<div style="font-size:12px;color:var(--text2);margin-bottom:10px">'+(d.descricao||'')+'</div>';
+    html+='<div style="display:flex;gap:6px;flex-wrap:wrap">';
     if(d.ficheiro_url){
-      html+='<a href="'+d.ficheiro_url+'" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:5px;background:var(--blue);color:#fff;text-decoration:none;padding:6px 12px;border-radius:7px;font-size:12px;font-weight:500"><i class="ti ti-external-link"></i> Abrir documento</a>';
+      html+='<a href="'+d.ficheiro_url+'" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:5px;background:var(--blue);color:#fff;text-decoration:none;padding:6px 12px;border-radius:7px;font-size:12px;font-weight:500"><i class="ti ti-external-link"></i> Abrir</a>';
     }
-    html+='</div>';
+    if(cu&&cu.is_admin){
+      html+='<button onclick="excluirDoc(''+d.id+'')" style="display:inline-flex;align-items:center;gap:5px;background:var(--redl);color:var(--red);border:1px solid #F09595;padding:6px 12px;border-radius:7px;font-size:12px;font-weight:500;cursor:pointer"><i class="ti ti-trash"></i> Excluir</button>';
+    }
+    html+='</div></div>';
   });
   el.innerHTML=html;
 }
@@ -559,6 +563,7 @@ async function loadAssinaturas(){
         html+='<img src="'+a.assinatura_img+'" style="height:45px;border:1px solid var(--border);border-radius:6px;background:#fff;display:block"/>';
         html+='</div>';
       }
+      html+='<button onclick="excluirAssinatura(''+a.id+'')" style="background:var(--redl);color:var(--red);border:1px solid #F09595;border-radius:7px;padding:5px 10px;font-size:11px;cursor:pointer;display:inline-flex;align-items:center;gap:4px"><i class="ti ti-trash"></i> Excluir</button>';
       if(a.recibos?.ficheiro_url){
         html+='<a href="'+a.recibos.ficheiro_url+'" target="_blank" class="bs bb" style="text-decoration:none;font-size:12px;padding:6px 12px;display:inline-flex;align-items:center;gap:5px"><i class="ti ti-file-text"></i> Ver recibo</a>';
       }
@@ -588,6 +593,18 @@ function exportarPontoExcel(){
   const a=document.createElement('a');
   a.href=url;a.download='ponto_fortix.csv';a.click();
   URL.revokeObjectURL(url);
+}
+
+async function excluirDoc(id){
+  if(!confirm('Tem a certeza que deseja excluir este documento?'))return;
+  await sb.from('documentos').delete().eq('id',id);
+  loadDocs();
+}
+
+async function excluirAssinatura(id){
+  if(!confirm('Tem a certeza que deseja excluir este recibo assinado?'))return;
+  await sb.from('assinaturas_recibos').delete().eq('id',id);
+  loadAssinaturas();
 }
 
 function showModal(id){document.getElementById(id).style.display='flex';}
