@@ -110,7 +110,7 @@ canvas{border:1px solid var(--border);border-radius:8px;cursor:crosshair;display
     <div class="fi"><label>NIF</label><input type="text" id="lNif" placeholder="123456789" maxlength="9"/></div>
     <div class="fi"><label>Senha</label><div style="position:relative">
   <input type="password" id="lPwd" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()" style="padding-right:40px"/>
-  <button type="button" onclick="const i=document.getElementById('lPwd');i.type=i.type==='password'?'text':'password';this.innerHTML=i.type==='password'?'<i class=&quot;ti ti-eye&quot;></i>':`<i class=&quot;ti ti-eye-off&quot;></i>`" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--text2);font-size:16px"><i class="ti ti-eye"></i></button>
+  <button type="button" onclick="togglePwd()" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--text2);font-size:16px" id="pwdToggleBtn"><i class="ti ti-eye"></i></button>
 </div></div>
     <button class="bp" onclick="doLogin()">Entrar</button>
     <div class="em" id="lErr">NIF ou senha incorretos.</div>
@@ -435,6 +435,12 @@ canvas{border:1px solid var(--border);border-radius:8px;cursor:crosshair;display
   </div>
 </div>
 <script>
+function togglePwd(){
+  var i=document.getElementById('lPwd');
+  var btn=document.getElementById('pwdToggleBtn');
+  if(i.type==='password'){i.type='text';btn.innerHTML='<i class="ti ti-eye-off"></i>';}
+  else{i.type='password';btn.innerHTML='<i class="ti ti-eye"></i>';}
+}
 let deferredPrompt;
 window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredPrompt=e;setTimeout(()=>{const b=document.getElementById('installBanner');if(b)b.style.display='flex';},3000);});
 function installApp(){if(deferredPrompt){deferredPrompt.prompt();deferredPrompt.userChoice.then(()=>{deferredPrompt=null;document.getElementById('installBanner').style.display='none';});}}
