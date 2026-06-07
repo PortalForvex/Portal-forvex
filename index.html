@@ -390,23 +390,10 @@ canvas{border:1px solid var(--border);border-radius:8px;cursor:crosshair;display
 </div>
 
 <div class="mo" id="modalVerColab">
-  <div class="mb" style="max-width:500px">
+  <div class="mb" style="max-width:600px;max-height:85vh;overflow-y:auto">
     <button class="mc" onclick="closeModal('modalVerColab')">&#x2715;</button>
     <div style="font-size:17px;font-weight:600;margin-bottom:1rem"><i class="ti ti-user"></i> Dados do Colaborador</div>
-    <div style="border:1px solid var(--border);border-radius:8px;overflow:hidden;margin-bottom:1rem">
-      <div class="fsec"><i class="ti ti-id-badge-2"></i> Identificação</div>
-      <div class="fr"><span class="fl">Nome</span><span id="vNome">—</span></div>
-      <div class="fr"><span class="fl">NIF</span><span id="vNif">—</span></div>
-      <div class="fr"><span class="fl">Email</span><span id="vEmail">—</span></div>
-      <div class="fsec" style="margin-top:8px"><i class="ti ti-briefcase"></i> Dados profissionais</div>
-      <div class="fr"><span class="fl">Cargo</span><span id="vCargo">—</span></div>
-      <div class="fr"><span class="fl">Departamento</span><span id="vDepto">—</span></div>
-      <div class="fr"><span class="fl">Data admissão</span><span id="vAdmissao">—</span></div>
-      <div class="fsec" style="margin-top:8px"><i class="ti ti-settings"></i> Estado no portal</div>
-      <div class="fr"><span class="fl">Estado</span><span id="vEstado">—</span></div>
-      <div class="fr"><span class="fl">Administrador</span><span id="vAdmin">—</span></div>
-      <div class="fr"><span class="fl">Senha</span><span id="vSenha">—</span></div>
-    </div>
+    <div id="vColabContent"></div>
     <div class="mbt">
       <button class="bs bb" onclick="closeModal('modalVerColab')">Fechar</button>
     </div>
