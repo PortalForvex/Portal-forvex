@@ -325,7 +325,7 @@ async function loadFicha(){
     html+='</div>';
   } else {
 html+='<div style="background:var(--ambl);border:1px solid #E8C97A;border-radius:8px;padding:12px 16px;font-size:13px;color:var(--amber);margin-top:8px"><i class="ti ti-info-circle"></i> Ficha pessoal ainda não preenchida.</div>';
-html+='<div style="background:var(--blu);border:1px solid #B5D4F4;border-radius:8px;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;margin-top:8px"><div><div style="font-size:14px;font-weight:600;color:var(--blue)">Preencha a sua ficha</div></div><a href="https://fortix-solutions.github.io/Ficha-Colaborador-Fortix/?nif=\'+u.nif+\'" target="_blank" class="bs bb" style="text-decoration:none;display:inline-flex;align-items:center;gap:6px"><i class="ti ti-edit"></i> Preencher ficha</a></div>';
+html+='<div style="background:var(--blu);border:1px solid #B5D4F4;border-radius:8px;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;margin-top:8px"><div><div style="font-size:14px;font-weight:600;color:var(--blue)">Preencha a sua ficha</div></div><a href="https://fortix-solutions.github.io/Ficha-Colaborador-Fortix/?nif='+u.nif+'" target="_blank" class="bs bb" style="text-decoration:none;display:inline-flex;align-items:center;gap:6px"><i class="ti ti-edit"></i> Preencher ficha</a></div>';
   }
 
   document.getElementById('fichaContent').innerHTML=html;
