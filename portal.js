@@ -324,13 +324,12 @@ async function loadFicha(){
     html+='<div class="fr"><span class="fl">Tamanho fato</span><span>'+(ficha.num_fato||'—')+'</span></div>';
     html+='</div>';
   } else {
-    html+='<div style="background:var(--ambl);border:1px solid #E8C97A;border-radius:8px;padding:12px 16px;font-size:13px;color:var(--amber);margin-top:8px"><i class="ti ti-info-circle"></i> Ficha pessoal ainda não preenchida. Clique em "Pedir atualização" para preencher.</div>';
+    html+='<div style="background:var(--ambl);border:1px solid #E8C97A;border-radius:8px;padding:12px 16px;font-size:13px;color:var(--amber);margin-top:8px"><i class="ti ti-info-circle"></i> Ficha pessoal ainda não preenchida. Clique em <strong>Preencher ficha</strong> para começar.</div>';
   }
 
-  // Add preencher ficha button with NIF
   html+='<div style="background:var(--blu);border:1px solid #B5D4F4;border-radius:8px;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;margin-top:8px">';
-  html+='<div><div style="font-size:14px;font-weight:600;color:var(--blue)">Precisa de atualizar dados?</div><div style="font-size:12px;color:var(--text2)">Preencha a sua ficha de colaborador</div></div>';
-  html+='<button onclick="abrirFicha()" class="bs bb" style="display:inline-flex;align-items:center;gap:6px"><i class="ti ti-edit"></i> Preencher ficha</button>';
+  html+='<div><div style="font-size:14px;font-weight:600;color:var(--blue)">'+( ficha ? 'Atualizar dados pessoais' : 'Preencher ficha de dados' )+'</div><div style="font-size:12px;color:var(--text2)">'+( ficha ? 'Submeta alterações à administração' : 'Preencha os seus dados pessoais' )+'</div></div>';
+  html+='<button onclick="abrirFicha()" class="bs bb" style="display:inline-flex;align-items:center;gap:6px"><i class="ti ti-edit"></i> '+( ficha ? 'Atualizar ficha' : 'Preencher ficha' )+'</button>';
   html+='</div>';
 
   document.getElementById('fichaContent').innerHTML=html;
