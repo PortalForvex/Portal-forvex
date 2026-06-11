@@ -366,7 +366,15 @@ async function loadAColab(){
     html+='<div style="background:var(--ambl);border:1px solid #E8C97A;border-radius:8px;padding:10px 14px;margin-bottom:1rem;font-size:13px;color:var(--amber)"><i class="ti ti-alert-triangle"></i> <strong>'+pendentes.length+' colaborador(es)</strong> com ficha pendente de preenchimento ADM.</div>';
   }
   
-  html+='<table><thead><tr><th>Nome</th><th>NIF</th><th>Cargo</th><th>Ficha</th><th>1.º login</th><th>Estado</th><th>Ação</th></tr></thead><tbody>';
+  const ativos = data.filter(c=>c.ativo).length;
+  const inativos = data.filter(c=>!c.ativo).length;
+  html+=`<div style="display:flex;gap:16px;margin-bottom:12px;font-size:13px">
+    <span style="color:var(--text2)"><i class="ti ti-users"></i> Total: <strong style="color:var(--text)">${data.length}</strong></span>
+    <span style="color:#3B6D11"><i class="ti ti-circle-check"></i> Ativos: <strong>${ativos}</strong></span>
+    ${inativos>0?`<span style="color:#E24B4A"><i class="ti ti-circle-x"></i> Inativos: <strong>${inativos}</strong></span>`:''}
+  </div>`;
+
+  html+='<table><thead><tr><th style="width:40px;text-align:center">#</th><th>Nome</th><th>NIF</th><th>Cargo</th><th>Ficha</th><th>1.º login</th><th>Estado</th><th>Ação</th></tr></thead><tbody>';
   
   data.forEach(function(c,idx){
     const btnEditar='<button data-idx="'+idx+'" class="btn-edit-colab" style="font-size:11px;padding:3px 8px;margin-right:3px;background:var(--amber);color:#fff;border:none;border-radius:6px;cursor:pointer">Editar</button>';
@@ -380,6 +388,7 @@ async function loadAColab(){
       '<span class="badge bg2">✓ OK</span>';
     
     html+='<tr>';
+    html+='<td style="text-align:center;color:var(--text2);font-size:12px">'+(idx+1)+'</td>';
     html+='<td><strong>'+c.nome+'</strong></td>';
     html+='<td>'+c.nif+'</td>';
     html+='<td>'+(c.cargo||'—')+'</td>';
@@ -391,6 +400,7 @@ async function loadAColab(){
   });
   
   html+='</tbody></table>';
+
   el.innerHTML=html;
   
   // Store data for buttons
