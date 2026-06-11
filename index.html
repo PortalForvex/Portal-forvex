@@ -278,12 +278,22 @@ canvas{border:1px solid var(--border);border-radius:8px;cursor:crosshair;display
           <div style="background:#f9f8f5;border:1px solid #e8e6df;border-radius:10px;padding:12px">
             <div style="font-size:13px;font-weight:500;margin-bottom:6px"><i class="ti ti-id-badge"></i> Documento de identificação</div>
             <input type="file" id="uploadDocId" accept=".pdf,.jpg,.jpeg,.png" style="font-size:13px;width:100%;margin-bottom:6px" />
-            <button class="bs bb" style="width:100%;font-size:13px" onclick="uploadDocColab('identificacao')"><i class="ti ti-upload"></i> Carregar</button>
+            <button class="bs bb" style="width:100%;font-size:13px" onclick="uploadDocColab('identificacao','uploadDocId')"><i class="ti ti-upload"></i> Carregar</button>
           </div>
           <div style="background:#f9f8f5;border:1px solid #e8e6df;border-radius:10px;padding:12px">
             <div style="font-size:13px;font-weight:500;margin-bottom:6px"><i class="ti ti-building-bank"></i> Comprovativo IBAN</div>
             <input type="file" id="uploadDocIban" accept=".pdf,.jpg,.jpeg,.png" style="font-size:13px;width:100%;margin-bottom:6px" />
-            <button class="bs bb" style="width:100%;font-size:13px" onclick="uploadDocColab('iban')"><i class="ti ti-upload"></i> Carregar</button>
+            <button class="bs bb" style="width:100%;font-size:13px" onclick="uploadDocColab('iban','uploadDocIban')"><i class="ti ti-upload"></i> Carregar</button>
+          </div>
+          <div style="background:#f9f8f5;border:1px solid #e8e6df;border-radius:10px;padding:12px">
+            <div style="font-size:13px;font-weight:500;margin-bottom:6px"><i class="ti ti-certificate"></i> Certificado / Formação</div>
+            <input type="file" id="uploadDocCert" accept=".pdf,.jpg,.jpeg,.png" style="font-size:13px;width:100%;margin-bottom:6px" />
+            <button class="bs bb" style="width:100%;font-size:13px" onclick="uploadDocColab('certificado','uploadDocCert')"><i class="ti ti-upload"></i> Carregar</button>
+          </div>
+          <div style="background:#f9f8f5;border:1px solid #e8e6df;border-radius:10px;padding:12px">
+            <div style="font-size:13px;font-weight:500;margin-bottom:6px"><i class="ti ti-file-plus"></i> Outro documento</div>
+            <input type="file" id="uploadDocOutro" accept=".pdf,.jpg,.jpeg,.png" style="font-size:13px;width:100%;margin-bottom:6px" />
+            <button class="bs bb" style="width:100%;font-size:13px" onclick="uploadDocColab('outro','uploadDocOutro')"><i class="ti ti-upload"></i> Carregar</button>
           </div>
         </div>
       </div>
