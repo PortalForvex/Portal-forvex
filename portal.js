@@ -1096,6 +1096,9 @@ async function loadEPIs(){
     if(meses>=12){badge='badge br2';estado='Renovar';urgente++;}
     else if(meses>=6){badge='badge ba2';estado='Atenção';atencao++;}
     else{badge='badge bg2';estado='OK';}
+    const confirmaStr = r.data_confirmacao
+      ? `<span style="font-size:11px;color:#3B6D11"><i class="ti ti-circle-check"></i> ${new Date(r.data_confirmacao).toLocaleDateString('pt-PT')}</span>`
+      : '<span style="font-size:11px;color:#E24B4A"><i class="ti ti-circle-x"></i> Pendente</span>';
     rows+=`<tr>
       <td><strong>${nome}</strong></td>
       <td>${r.tipo||'—'}</td>
@@ -1103,7 +1106,7 @@ async function loadEPIs(){
       <td style="text-align:center">${r.data_entrega||'—'}</td>
       <td style="text-align:center">${r.proximo_renovacao||'—'}</td>
       <td style="text-align:center"><span class="${badge}">${estado}</span></td>
-      <td style="text-align:center">${r.assinado?'<i class="ti ti-circle-check" style="color:#3B6D11"></i>':'<i class="ti ti-circle-x" style="color:#E24B4A"></i>'}</td>
+      <td style="text-align:center">${confirmaStr}</td>
       <td style="text-align:center"><button class="bs" style="font-size:11px;padding:3px 8px" onclick="eliminarEPI('${r.id}')"><i class="ti ti-trash"></i></button></td>
     </tr>`;
   });
@@ -1123,7 +1126,7 @@ async function loadEPIs(){
     </div>`;
 
   el.innerHTML=`<table><thead><tr>
-    <th>Colaborador</th><th>EPI</th><th>Tam.</th><th>Entrega</th><th>Renovação</th><th>Estado</th><th>Assinado</th><th></th>
+    <th>Colaborador</th><th>EPI</th><th>Tam.</th><th>Entrega</th><th>Renovação</th><th>Estado</th><th>Confirmação recebimento</th><th></th>
   </tr></thead><tbody>${rows}</tbody></table>`;
 }
 
@@ -1351,8 +1354,10 @@ async function uploadDocColab(tipo){
     ficheiro_url:urlData.publicUrl,
     carregado_por:'colaborador'
   });
-  toast('Documento carregado!');
+  toast('✅ Documento carregado com sucesso!');
   loadMeusDocs();
+  // Clear file input
+  document.getElementById(inputId).value='';
 }
 
 async function loadMeusEPIs(){
@@ -1377,11 +1382,22 @@ async function loadMeusEPIs(){
       <div style="display:flex;align-items:center;gap:8px">
         <span class="${badge}">${estado}</span>
         ${podeRenovar?`<button class="bs ba" style="font-size:12px;padding:4px 10px" onclick="pedirRenovacaoEPI('${r.tipo}')"><i class="ti ti-refresh"></i> Pedir renovação</button>`:''}
+        ${!r.data_confirmacao?`<button class="bs bb" style="font-size:12px;padding:4px 10px" onclick="confirmarRecebimentoEPI('${r.id}')"><i class="ti ti-circle-check"></i> Confirmar recebimento</button>`:`<span style="font-size:11px;color:#3B6D11"><i class="ti ti-circle-check"></i> Recebido em ${new Date(r.data_confirmacao).toLocaleDateString('pt-PT')}</span>`}
       </div>
     </div>`;
   });
   html+='</div>';
   el.innerHTML=html;
+}
+
+async function confirmarRecebimentoEPI(epiId){
+  const{error}=await sb.from('epis').update({
+    data_confirmacao: new Date().toISOString(),
+    assinado: true
+  }).eq('id',epiId);
+  if(error){alert('Erro: '+error.message);return;}
+  toast('✅ Recebimento confirmado!');
+  loadMeusEPIs();
 }
 
 async function pedirRenovacaoEPI(tipo){
