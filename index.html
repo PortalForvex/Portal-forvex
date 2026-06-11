@@ -131,6 +131,8 @@ canvas{border:1px solid var(--border);border-radius:8px;cursor:crosshair;display
     <div class="ni" id="n-recibos" onclick="showP('recibos')"><i class="ti ti-file-invoice"></i> Recibos</div>
     <div class="ni" id="n-docs" onclick="showP('docs')"><i class="ti ti-folder"></i> Documentos</div>
     <div class="ni" id="n-ficha" onclick="showP('ficha')"><i class="ti ti-id-badge-2"></i> Minha ficha</div>
+      <div class="ni" id="n-meusdocs" onclick="showP('meusdocs')"><i class="ti ti-files"></i> Meus documentos</div>
+      <div class="ni" id="n-meusepis" onclick="showP('meusepis')"><i class="ti ti-shield-check"></i> Meus EPIs</div>
     <div id="admNav" class="hidden">
       <div class="nav-sep">Administração</div>
       <div class="ni" id="n-acolab" onclick="showP('acolab')"><i class="ti ti-users"></i> Colaboradores</div>
@@ -138,6 +140,9 @@ canvas{border:1px solid var(--border);border-radius:8px;cursor:crosshair;display
       <div class="ni" id="n-arecibos" onclick="showP('arecibos')"><i class="ti ti-upload"></i> Carregar recibos</div>
       <div class="ni" id="n-adocs" onclick="showP('adocs')"><i class="ti ti-file-plus"></i> Publicar documentos</div>
       <div class="ni" id="n-assinaturas" onclick="showP('assinaturas')"><i class="ti ti-files"></i> Recibos Assinados</div>
+      <div class="ni" id="n-relatorio" onclick="showP('relatorio')"><i class="ti ti-chart-bar"></i> Relatório horas</div>
+      <div class="ni" id="n-epis" onclick="showP('epis')"><i class="ti ti-shield-check"></i> Gestão EPIs</div>
+      <div class="ni" id="n-alertas" onclick="showP('alertas')"><i class="ti ti-bell"></i> Alertas documentos</div>
     </div>
     <div class="nl" onclick="doLogout()"><i class="ti ti-logout"></i> Sair</div>
   </div>
@@ -259,6 +264,31 @@ canvas{border:1px solid var(--border);border-radius:8px;cursor:crosshair;display
       <div class="cd"><div id="docsGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px"><p style="color:var(--text2);font-size:13px;text-align:center;padding:1rem;grid-column:1/-1">Sem documentos</p></div></div>
     </div>
 
+    <div id="p-meusepis" class="hidden">
+      <div class="pt">Os meus EPIs</div>
+      <div id="meusEpisContent"></div>
+    </div>
+
+    <div id="p-meusdocs" class="hidden">
+      <div class="pt">Os meus documentos</div>
+      <div id="meusdocsContent"></div>
+      <div style="margin-top:1rem">
+        <div style="font-size:14px;font-weight:600;color:var(--blue);margin-bottom:8px">Carregar documentos</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          <div>
+            <label style="font-size:13px;color:var(--text2);display:block;margin-bottom:4px">Documento de identificação</label>
+            <input type="file" id="uploadDocId" accept=".pdf,.jpg,.jpeg,.png" style="font-size:13px;width:100%" />
+            <button class="bs bb" style="margin-top:6px;width:100%;font-size:13px" onclick="uploadDocColab('identificacao')"><i class="ti ti-upload"></i> Carregar</button>
+          </div>
+          <div>
+            <label style="font-size:13px;color:var(--text2);display:block;margin-bottom:4px">Comprovativo IBAN</label>
+            <input type="file" id="uploadDocIban" accept=".pdf,.jpg,.jpeg,.png" style="font-size:13px;width:100%" />
+            <button class="bs bb" style="margin-top:6px;width:100%;font-size:13px" onclick="uploadDocColab('iban')"><i class="ti ti-upload"></i> Carregar</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <div id="p-ficha" class="hidden">
       <div class="pt">Minha ficha</div>
       <div class="ps">Os seus dados no portal</div>
@@ -316,6 +346,30 @@ canvas{border:1px solid var(--border);border-radius:8px;cursor:crosshair;display
         <button class="bs bb" onclick="publicarDoc()">Publicar documento</button>
         <div id="aDMsg" style="margin-top:8px;font-size:13px"></div>
       </div>
+    </div>
+
+    <div id="p-relatorio" class="hidden">
+      <div class="pt">Relatório mensal de horas</div>
+      <div style="display:flex;gap:8px;margin-bottom:1rem;flex-wrap:wrap">
+        <select id="relMes" onchange="loadRelatorio()" style="font-size:13px;padding:6px 10px;border-radius:8px;border:1px solid #d4d2ca"></select>
+        <select id="relColab" onchange="loadRelatorio()" style="font-size:13px;padding:6px 10px;border-radius:8px;border:1px solid #d4d2ca"><option value="">Todos os colaboradores</option></select>
+      </div>
+      <div id="relStats" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin-bottom:1rem"></div>
+      <div id="relTabela"></div>
+    </div>
+
+    <div id="p-epis" class="hidden">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem">
+        <div class="pt">Gestão de EPIs</div>
+        <button class="bs bb" onclick="abrirModalEPI()"><i class="ti ti-plus"></i> Registar entrega</button>
+      </div>
+      <div id="episStats" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin-bottom:1rem"></div>
+      <div id="episTabela"></div>
+    </div>
+
+    <div id="p-alertas" class="hidden">
+      <div class="pt">Alertas de documentos</div>
+      <div id="alertasContent"></div>
     </div>
 
     <div id="p-assinaturas" class="hidden">
