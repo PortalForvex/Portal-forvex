@@ -60,7 +60,7 @@ function startClock(){
 }
 
 function showP(page){
-  ['dash','ponto','recibos','docs','ficha','acolab','apontos','arecibos','adocs','assinaturas'].forEach(p=>{
+  ['dash','ponto','recibos','docs','ficha','acolab','apontos','arecibos','adocs','assinaturas','relatorio','epis','alertas','meusepis','meusdocs'].forEach(p=>{
     const el=document.getElementById('p-'+p);if(el)el.classList.add('hidden');
     const n=document.getElementById('n-'+p);if(n)n.classList.remove('active');
   });
@@ -699,8 +699,113 @@ async function verColab(id){
     html+='<div style="background:var(--ambl);border:1px solid #E8C97A;border-radius:8px;padding:10px 14px;font-size:13px;color:var(--amber);margin-top:8px"><i class="ti ti-info-circle"></i> Ficha pessoal ainda não preenchida pelo colaborador.</div>';
   }
 
+  // Documents section
+  html+='<div style="margin-bottom:12px">';
+  html+='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">';
+  html+='<div class="fsec" style="margin-bottom:0;border:none"><i class="ti ti-files"></i> Documentos</div>';
+  html+='<button onclick="abrirUploadDoc(\''+id+'\')" class="bs bb" style="font-size:11px;padding:4px 10px;display:inline-flex;align-items:center;gap:4px"><i class="ti ti-upload"></i> Carregar</button>';
+  html+='</div>';
+  html+='<div id="docsColab_'+id+'"><p style="font-size:13px;color:var(--text2)">A carregar...</p></div>';
+  html+='</div>';
+
   document.getElementById('vColabContent').innerHTML=html;
   showModal('modalVerColab');
+
+  // Load docs after modal opens
+  loadDocsColab(id);
+}
+
+async function loadDocsColab(colaboradorId){
+  const el=document.getElementById('docsColab_'+colaboradorId);
+  if(!el)return;
+  const{data}=await sb.from('documentos_ficha').select('*').eq('colaborador_id',colaboradorId).order('criado_em',{ascending:false});
+  if(!data||!data.length){el.innerHTML='<p style="font-size:13px;color:var(--text2)">Sem documentos.</p>';return;}
+  const icons={identificacao:'ti-id-badge',iban:'ti-building-bank',contrato:'ti-file-text'};
+  const cores={identificacao:'#E6F1FB,#185FA5',iban:'#EAF3DE,#3B6D11',contrato:'#FAEEDA,#BA7517'};
+  let html='<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px">';
+  data.forEach(d=>{
+    const icon=icons[d.tipo]||'ti-file';
+    const [bg,fc]=(cores[d.tipo]||'#f9f8f5,#555').split(',');
+    html+=`<div style="background:#fff;border:0.5px solid #d4d2ca;border-radius:8px;padding:10px;display:flex;align-items:center;gap:8px">
+      <div style="width:32px;height:32px;border-radius:6px;background:${bg};display:flex;align-items:center;justify-content:center;flex-shrink:0">
+        <i class="ti ${icon}" style="font-size:16px;color:${fc}"></i>
+      </div>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:12px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${d.nome_ficheiro||d.tipo}</div>
+        <div style="font-size:11px;color:var(--text2)">${d.carregado_por==='colaborador'?'Colaborador':'ADM'} · ${new Date(d.criado_em).toLocaleDateString('pt-PT')}</div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:2px">
+        <a href="${d.ficheiro_url}" target="_blank" style="color:var(--text2);display:flex"><i class="ti ti-eye" style="font-size:14px"></i></a>
+        <button onclick="eliminarDocColab('${d.id}','${colaboradorId}')" style="background:none;border:none;cursor:pointer;color:#E24B4A;padding:0;display:flex"><i class="ti ti-trash" style="font-size:14px"></i></button>
+      </div>
+    </div>`;
+  });
+  html+='</div>';
+  el.innerHTML=html;
+}
+
+async function eliminarDocColab(docId,colaboradorId){
+  if(!confirm('Eliminar este documento?'))return;
+  await sb.from('documentos_ficha').delete().eq('id',docId);
+  loadDocsColab(colaboradorId);
+  toast('Documento eliminado');
+}
+
+function abrirUploadDoc(colaboradorId){
+  const modal=document.createElement('div');
+  modal.id='modalUploadDoc';
+  modal.style.cssText='position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:1000;display:flex;align-items:center;justify-content:center;padding:1rem';
+  modal.innerHTML=`
+    <div style="background:#fff;border-radius:16px;padding:1.5rem;max-width:420px;width:100%">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
+        <div style="font-size:16px;font-weight:600"><i class="ti ti-upload"></i> Carregar documento</div>
+        <button onclick="document.getElementById('modalUploadDoc').remove()" style="background:none;border:none;font-size:22px;cursor:pointer;color:#888">×</button>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <div>
+          <label style="font-size:12px;color:#555;font-weight:500;display:block;margin-bottom:4px">Tipo de documento</label>
+          <select id="upDocTipo" style="border:1px solid #d4d2ca;border-radius:8px;padding:8px 10px;font-size:13px;width:100%">
+            <option value="contrato">Contrato de trabalho</option>
+            <option value="identificacao">Documento de identificação</option>
+            <option value="iban">Comprovativo IBAN</option>
+            <option value="outro">Outro</option>
+          </select>
+        </div>
+        <div>
+          <label style="font-size:12px;color:#555;font-weight:500;display:block;margin-bottom:4px">Ficheiro (PDF, JPG, PNG · máx. 10MB)</label>
+          <input type="file" id="upDocFile" accept=".pdf,.jpg,.jpeg,.png" style="font-size:13px;width:100%" />
+        </div>
+      </div>
+      <div id="upDocErro" style="display:none;background:#FCEBEB;border-radius:8px;padding:10px;font-size:13px;color:#A32D2D;margin-top:10px"></div>
+      <div style="display:flex;gap:8px;margin-top:1rem;justify-content:flex-end">
+        <button onclick="document.getElementById('modalUploadDoc').remove()" style="padding:9px 20px;border-radius:8px;border:1px solid #d4d2ca;background:#fff;cursor:pointer;font-size:13px">Cancelar</button>
+        <button onclick="confirmarUploadDoc('${colaboradorId}')" style="padding:9px 20px;border-radius:8px;border:none;background:#152B55;color:#fff;cursor:pointer;font-size:13px;font-weight:500"><i class="ti ti-upload"></i> Carregar</button>
+      </div>
+    </div>`;
+  document.body.appendChild(modal);
+}
+
+async function confirmarUploadDoc(colaboradorId){
+  const tipo=document.getElementById('upDocTipo').value;
+  const file=document.getElementById('upDocFile')?.files[0];
+  const erroEl=document.getElementById('upDocErro');
+  if(!file){erroEl.style.display='block';erroEl.textContent='Selecione um ficheiro.';return;}
+  if(file.size>10*1024*1024){erroEl.style.display='block';erroEl.textContent='Ficheiro demasiado grande. Máx. 10MB.';return;}
+  const ext=file.name.split('.').pop();
+  const path=`docs-ficha/${colaboradorId}/${tipo}-${Date.now()}.${ext}`;
+  const{error:upErr}=await sb.storage.from('Documentos').upload(path,file,{upsert:true});
+  if(upErr){erroEl.style.display='block';erroEl.textContent='Erro ao carregar: '+upErr.message;return;}
+  const{data:urlData}=sb.storage.from('Documentos').getPublicUrl(path);
+  await sb.from('documentos_ficha').insert({
+    colaborador_id:colaboradorId,
+    tipo,
+    nome_ficheiro:file.name,
+    ficheiro_url:urlData.publicUrl,
+    carregado_por:'adm'
+  });
+  document.getElementById('modalUploadDoc').remove();
+  loadDocsColab(colaboradorId);
+  toast('Documento carregado!');
 }
 
 async function editarColab(id){
@@ -1181,8 +1286,33 @@ async function notificarDoc(email,nome,tipo,dias){
 async function loadMeusDocs(){
   if(!cu)return;
   const el=document.getElementById('meusdocsContent');
+  const contratoEl=document.getElementById('contratoContent');
+
+  // Load all docs for this colaborador
   const{data}=await sb.from('documentos_ficha').select('*').eq('colaborador_id',cu.id).order('criado_em',{ascending:false});
-  if(!data||!data.length){el.innerHTML='<p style="color:var(--text2);font-size:13px;margin-bottom:1rem">Ainda não tem documentos carregados.</p>';return;}
+
+  // Separate contrato (uploaded by ADM) from own docs
+  const meusDocs=(data||[]).filter(d=>d.carregado_por==='colaborador');
+  const contratoDocs=(data||[]).filter(d=>d.tipo==='contrato');
+
+  // Show contrato
+  if(contratoEl){
+    if(contratoDocs.length){
+      contratoEl.innerHTML=contratoDocs.map(d=>`
+        <div style="background:#f9f8f5;border:1px solid #e8e6df;border-radius:10px;padding:12px;display:flex;align-items:center;gap:10px;margin-bottom:8px">
+          <i class="ti ti-file-text" style="font-size:22px;color:#BA7517"></i>
+          <div style="flex:1">
+            <div style="font-size:13px;font-weight:500">${d.nome_ficheiro||'Contrato'}</div>
+            <div style="font-size:12px;color:var(--text2)">Disponibilizado pela ADM · ${new Date(d.criado_em).toLocaleDateString('pt-PT')}</div>
+          </div>
+          <a href="${d.ficheiro_url}" target="_blank" class="bs bb" style="font-size:12px;padding:5px 10px;text-decoration:none"><i class="ti ti-eye"></i> Ver</a>
+        </div>`).join('');
+    } else {
+      contratoEl.innerHTML='<p style="font-size:13px;color:var(--text2)">Contrato ainda não disponível.</p>';
+    }
+  }
+
+  if(!meusDocs.length){el.innerHTML='<p style="color:var(--text2);font-size:13px;margin-bottom:1rem">Ainda não carregou documentos.</p>';return;}
   let html='<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px;margin-bottom:1rem">';
   data.forEach(d=>{
     const icon=d.tipo==='identificacao'?'ti-id-badge':d.tipo==='iban'?'ti-building-bank':'ti-file-text';
