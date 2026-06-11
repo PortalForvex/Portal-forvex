@@ -1,5 +1,14 @@
 const SB_URL='https://wbriqlcqfgnpjbxesmdc.supabase.co';
 const SB_KEY='sb_publishable_T2GYe2-5dVrXLWZasUzPZQ_DnS7k-27';
+function toast(msg,tipo){
+  const el=document.createElement('div');
+  const cor=tipo==='erro'?'#E24B4A':'#152B55';
+  el.style.cssText=`position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:${cor};color:#fff;padding:12px 24px;border-radius:10px;font-size:14px;font-weight:500;z-index:9999;box-shadow:0 4px 16px rgba(0,0,0,0.2);transition:opacity 0.3s`;
+  el.textContent=msg;
+  document.body.appendChild(el);
+  setTimeout(()=>{el.style.opacity='0';setTimeout(()=>el.remove(),300);},3000);
+}
+
 const sb=supabase.createClient(SB_URL,SB_KEY);
 const EJ_SERVICE='Fortix-portal';
 const EJ_TEMPLATE='template_9cnwr2b';
@@ -1275,12 +1284,16 @@ async function loadAlertas(){
 async function notificarDoc(email,nome,tipo,dias){
   if(!email){alert('Colaborador sem email registado.');return;}
   // Send via EmailJS
-  emailjs.send('Fortix-portal','template_9cnwr2b',{
-    to_email:email,
-    to_name:nome,
-    message:`O seu documento (${tipo}) expira em ${dias} dias. Por favor contacte a administração para proceder à renovação.`,
-    subject:'Aviso: documento a expirar — Fortix Solutions'
-  }).then(()=>toast('Email enviado a '+nome)).catch(()=>alert('Erro ao enviar email'));
+  emailjs.send(EJ_SERVICE,'template_ype66ih',{
+    nome:nome,
+    email_destino:email,
+    assunto:'Aviso: documento a expirar — Fortix Solutions',
+    mensagem:`O seu documento (${tipo}) expira em ${dias} dias. Por favor contacte a administração para proceder à renovação.`,
+    nif:'—',senha:'—'
+  }).then(()=>toast('✅ Email enviado a '+nome)).catch(e=>{
+    console.error('EmailJS error:',e);
+    toast('Erro ao enviar email','erro');
+  });
 }
 
 // ─────────────────────────────────────────────────────
@@ -1336,8 +1349,8 @@ async function loadMeusDocs(){
   el.innerHTML=html;
 }
 
-async function uploadDocColab(tipo){
-  const inputId=tipo==='identificacao'?'uploadDocId':'uploadDocIban';
+async function uploadDocColab(tipo, inputId){
+  if(!inputId)inputId=tipo==='identificacao'?'uploadDocId':'uploadDocIban';
   const file=document.getElementById(inputId)?.files[0];
   if(!file){alert('Selecione um ficheiro.');return;}
   if(file.size>10*1024*1024){alert('Ficheiro demasiado grande. Máx. 10MB.');return;}
@@ -1374,6 +1387,7 @@ async function loadMeusEPIs(){
     let badge='badge bg2',estado='OK',podeRenovar=false;
     if(meses>=12){badge='badge br2';estado='Renovar';podeRenovar=true;}
     else if(meses>=6){badge='badge ba2';estado='Atenção';podeRenovar=true;}
+    else if(meses===0){badge='badge bg2';estado='Recente';}
     html+=`<div style="background:#fff;border:0.5px solid #d4d2ca;border-radius:10px;padding:12px 14px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
       <div>
         <strong>${r.tipo||'—'}</strong> ${r.tamanho?'('+r.tamanho+')':''}
@@ -1402,11 +1416,16 @@ async function confirmarRecebimentoEPI(epiId){
 
 async function pedirRenovacaoEPI(tipo){
   // Send email to ADM
-  emailjs.send('Fortix-portal','template_9cnwr2b',{
-    to_email:'geral@fortix.pt',
-    to_name:'Administração Fortix',
-    message:`O colaborador ${cu.nome} solicita renovação do EPI: ${tipo}.`,
-    subject:`Pedido de renovação EPI — ${cu.nome}`
-  }).then(()=>toast('Pedido enviado à administração!')).catch(()=>alert('Erro ao enviar pedido'));
+  emailjs.send(EJ_SERVICE,'template_ype66ih',{
+    nome:'Administração Fortix',
+    email_destino:'geral@fortix.pt',
+    assunto:`Pedido de renovação EPI — ${cu.nome}`,
+    mensagem:`O colaborador ${cu.nome} (NIF: ${cu.nif}) solicita renovação do EPI: ${tipo}.`,
+    nif:cu.nif||'—',
+    senha:'—'
+  }).then(()=>toast('✅ Pedido enviado à administração!')).catch(e=>{
+    console.error('EmailJS error:',e);
+    toast('Erro ao enviar. Tente novamente.','erro');
+  });
 }
 
