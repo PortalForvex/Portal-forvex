@@ -85,7 +85,7 @@ function showP(page){
   if(page==='dash')loadDashboard();
   if(page==='assinaturas')loadAssinaturas();
   if(page==='relatorio')initRelatorio();
-  if(page==='epis')loadEPIs();
+  if(page==='epis')initEPIs();
   if(page==='alertas')loadAlertas();
   if(page==='meusepis')loadMeusEPIs();
   if(page==='meusdocs')loadMeusDocs();
@@ -1098,8 +1098,24 @@ async function loadRelatorio(){
 // ─────────────────────────────────────────────────────
 // GESTÃO DE EPIs
 // ─────────────────────────────────────────────────────
+async function initEPIs(){
+  const sel=document.getElementById('epiFilterColab');
+  if(sel && sel.options.length<=1){
+    const{data:colabs}=await sb.from('colaboradores').select('id,nome').eq('ativo',true).order('nome');
+    if(colabs)colabs.forEach(c=>{
+      const o=document.createElement('option');
+      o.value=c.id;o.textContent=c.nome;
+      sel.appendChild(o);
+    });
+  }
+  loadEPIs();
+}
+
 async function loadEPIs(){
-  const{data}=await sb.from('epis').select('*,colaboradores(nome)').order('data_entrega',{ascending:false});
+  const filtro=document.getElementById('epiFilterColab')?.value||'';
+  let query=sb.from('epis').select('*,colaboradores(nome)').order('data_entrega',{ascending:false});
+  if(filtro)query=query.eq('colaborador_id',filtro);
+  const{data}=await query;
   const el=document.getElementById('episTabela');
   if(!data||!data.length){el.innerHTML='<p style="color:var(--text2);font-size:13px;text-align:center;padding:1rem">Sem registos de EPIs</p>';return;}
 
