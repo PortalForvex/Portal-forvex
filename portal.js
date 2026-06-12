@@ -37,7 +37,22 @@ function iniciarPortal(){
   if(cu.is_admin)document.getElementById('admNav').classList.remove('hidden');
   if(cu.troca_senha)showModal('modalSenha');
   startClock();showP('dash');
-  initNotificacoes();loadDashboard();
+  initNotificacoes();
+  // Add menu toggle button to sidebar
+  const sbLogo=document.querySelector('.sb-logo');
+  if(sbLogo&&!document.getElementById('sidebarToggleBtn')){
+    const btn=document.createElement('button');
+    btn.id='sidebarToggleBtn';
+    btn.className='hamburger-btn';
+    btn.title='Ocultar menu';
+    btn.innerHTML='<i class="ti ti-layout-sidebar-left-collapse" style="font-size:18px"></i>';
+    btn.onclick=toggleSidebar;
+    btn.style.marginLeft='auto';
+    sbLogo.style.display='flex';
+    sbLogo.style.alignItems='center';
+    sbLogo.style.justifyContent='space-between';
+    sbLogo.appendChild(btn);
+  }loadDashboard();
 }
 
 async function trocarSenha(){
@@ -96,6 +111,17 @@ function showP(page){
 async function loadDashboard(){
   if(!cu)return;
   if(cu.is_admin){
+    // Add Dashboard ADM item to admNav if not exists
+    const admNav=document.getElementById('admItems');
+    if(admNav && !document.getElementById('n-dashadm')){
+      const dashBtn=document.createElement('div');
+      dashBtn.id='n-dashadm';
+      dashBtn.className='ni';
+      dashBtn.style.cssText='cursor:pointer;font-weight:500';
+      dashBtn.innerHTML='<i class="ti ti-layout-dashboard"></i> <span class="ni-text">Dashboard ADM</span>';
+      dashBtn.onclick=function(){showP('dash');};
+      admNav.insertBefore(dashBtn,admNav.firstChild);
+    }
     const{count:tc}=await sb.from('colaboradores').select('*',{count:'exact',head:true}).eq('ativo',true);
     const{count:rp}=await sb.from('recibos').select('*',{count:'exact',head:true}).eq('assinado',false);
     const{count:dc}=await sb.from('documentos').select('*',{count:'exact',head:true});
@@ -1506,14 +1532,27 @@ async function pedirRenovacaoEPI(tipo, tamanho){
 // ─────────────────────────────────────────────────────
 // MENU COLAPSÁVEL
 // ─────────────────────────────────────────────────────
+function toggleNavSection(id, chevId){
+  const el=document.getElementById(id);
+  const chev=document.getElementById(chevId);
+  if(!el)return;
+  const isOpen=el.style.maxHeight!=='0px';
+  el.style.maxHeight=isOpen?'0px':'600px';
+  if(chev)chev.style.transform=isOpen?'rotate(-90deg)':'rotate(0deg)';
+}
+
 function toggleSidebar(){
   const sb=document.getElementById('sidebar');
-  const icon=document.getElementById('sidebarIcon');
-  sb.classList.toggle('collapsed');
-  if(sb.classList.contains('collapsed')){
-    icon.className='ti ti-layout-sidebar-left-expand';
+  const btn=document.getElementById('hamburguerBtn');
+  const icon=document.getElementById('hamburguerIcon');
+  const isHidden=sb.classList.toggle('hidden-menu');
+  if(isHidden){
+    // Menu hidden - show hamburger button
+    if(btn)btn.style.display='flex';
+    if(icon)icon.className='ti ti-menu-2';
   } else {
-    icon.className='ti ti-layout-sidebar-left-collapse';
+    // Menu visible - hide hamburger button
+    if(btn)btn.style.display='none';
   }
 }
 
