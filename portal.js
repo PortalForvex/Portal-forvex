@@ -112,17 +112,6 @@ function showP(page){
 async function loadDashboard(){
   if(!cu)return;
   if(cu.is_admin){
-    // Add Dashboard ADM item to admNav if not exists
-    const admNav=document.getElementById('admItems');
-    if(admNav && !document.getElementById('n-dashadm')){
-      const dashBtn=document.createElement('div');
-      dashBtn.id='n-dashadm';
-      dashBtn.className='ni';
-      dashBtn.style.cssText='cursor:pointer;font-weight:500';
-      dashBtn.innerHTML='<i class="ti ti-layout-dashboard"></i> <span class="ni-text">Dashboard ADM</span>';
-      dashBtn.onclick=function(){showP('dashadm');};
-      admNav.insertBefore(dashBtn,admNav.firstChild);
-    }
     const{count:tc}=await sb.from('colaboradores').select('*',{count:'exact',head:true}).eq('ativo',true);
     const{count:rp}=await sb.from('recibos').select('*',{count:'exact',head:true}).eq('assinado',false);
     const{count:dc}=await sb.from('documentos').select('*',{count:'exact',head:true});
