@@ -1450,7 +1450,7 @@ async function loadMeusEPIs(){
       </div>
       <div style="display:flex;align-items:center;gap:8px">
         <span class="${badge}">${estado}</span>
-        ${podeRenovar?`<button class="bs ba" style="font-size:12px;padding:4px 10px" onclick="pedirRenovacaoEPI('${r.tipo}')"><i class="ti ti-refresh"></i> Pedir renovação</button>`:''}
+        ${podeRenovar?`<button class="bs ba" style="font-size:12px;padding:4px 10px" onclick="pedirRenovacaoEPI('${r.tipo}','${r.tamanho||''}')"><i class="ti ti-refresh"></i> Pedir renovação</button>`:''}
         ${!r.data_confirmacao?`<button class="bs bb" style="font-size:12px;padding:4px 10px" onclick="confirmarRecebimentoEPI('${r.id}')"><i class="ti ti-circle-check"></i> Confirmar recebimento</button>`:`<span style="font-size:11px;color:#3B6D11"><i class="ti ti-circle-check"></i> Recebido em ${new Date(r.data_confirmacao).toLocaleDateString('pt-PT')}</span>`}
       </div>
     </div>`;
@@ -1469,7 +1469,7 @@ async function confirmarRecebimentoEPI(epiId){
   loadMeusEPIs();
 }
 
-async function pedirRenovacaoEPI(tipo){
+async function pedirRenovacaoEPI(tipo, tamanho){
   // Send email to ADM
   emailjs.send(EJ_SERVICE,'template_ype66lh',{
     name:cu.nome,
@@ -1477,7 +1477,7 @@ async function pedirRenovacaoEPI(tipo){
     nome:'Administração Fortix',
     email_destino:'geral@fortix.pt',
     assunto:`Pedido de renovação EPI — ${cu.nome}`,
-    mensagem:`O colaborador ${cu.nome} (NIF: ${cu.nif}) solicita renovação do EPI: ${tipo}.`
+    mensagem:`O colaborador ${cu.nome} (NIF: ${cu.nif}) solicita renovação do EPI: ${tipo}${tamanho?' (tamanho: '+tamanho+')':''}.`
   }).then(()=>toast('✅ Pedido enviado à administração!')).catch(e=>{
     console.error('EmailJS error:',e);
     toast('Erro ao enviar. Tente novamente.','erro');
