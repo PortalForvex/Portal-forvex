@@ -1189,8 +1189,18 @@ function abrirModalEPI(){
           <input id="epi_data" type="date" style="border:1px solid #d4d2ca;border-radius:8px;padding:8px 10px;font-size:13px" />
         </div>
         <div style="display:flex;flex-direction:column;gap:4px">
-          <label style="font-size:12px;color:#555;font-weight:500">Próx. renovação</label>
-          <input id="epi_renov" type="date" style="border:1px solid #d4d2ca;border-radius:8px;padding:8px 10px;font-size:13px" />
+          <label style="font-size:12px;color:#555;font-weight:500">Periodicidade</label>
+          <select id="epi_period" onchange="calcRenovacaoEPI()" style="border:1px solid #d4d2ca;border-radius:8px;padding:8px 10px;font-size:13px">
+            <option value="7">Semanal (7 dias)</option>
+            <option value="15">Quinzenal (15 dias)</option>
+            <option value="30">Mensal (30 dias)</option>
+            <option value="180" selected>Semestral (6 meses)</option>
+            <option value="365">Anual (12 meses)</option>
+          </select>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:4px">
+          <label style="font-size:12px;color:#555;font-weight:500">Próx. renovação <span style="color:#3B6D11;font-weight:400">(automático)</span></label>
+          <input id="epi_renov" type="date" style="border:1px solid #C0DD97;border-radius:8px;padding:8px 10px;font-size:13px;background:#EAF3DE;color:#3B6D11" readonly />
         </div>
         <div style="display:flex;align-items:center;gap:8px;padding-top:18px">
           <input type="checkbox" id="epi_assn" style="width:16px;height:16px" />
@@ -1210,8 +1220,27 @@ function abrirModalEPI(){
       document.getElementById('epi_colab').appendChild(o);
     });
   });
-  // Set today
-  document.getElementById('epi_data').value=new Date().toISOString().split('T')[0];
+  // Set today and auto-fill 6 months for renovacao
+  const hoje=new Date();
+  document.getElementById('epi_data').value=hoje.toISOString().split('T')[0];
+  const renovDate=new Date(hoje.setMonth(hoje.getMonth()+6));
+  document.getElementById('epi_renov').value=renovDate.toISOString().split('T')[0];
+
+  // Auto-update renovacao when entrega changes
+  document.getElementById('epi_data').addEventListener('change', calcRenovacaoEPI);
+  document.getElementById('epi_period').addEventListener('change', calcRenovacaoEPI);
+}
+
+function calcRenovacaoEPI(){
+  const dataEl=document.getElementById('epi_data');
+  const periodEl=document.getElementById('epi_period');
+  const renovEl=document.getElementById('epi_renov');
+  if(!dataEl||!periodEl||!renovEl)return;
+  const dias=parseInt(periodEl.value)||180;
+  const d=new Date(dataEl.value);
+  if(isNaN(d.getTime()))return;
+  d.setDate(d.getDate()+dias);
+  renovEl.value=d.toISOString().split('T')[0];
 }
 
 async function guardarEPI(){
@@ -1222,7 +1251,9 @@ async function guardarEPI(){
   const renov=document.getElementById('epi_renov').value;
   const assn=document.getElementById('epi_assn').checked;
   if(!cid||!tipo||!data){alert('Preencha colaborador, tipo e data.');return;}
-  const{error}=await sb.from('epis').insert({colaborador_id:cid,tipo,tamanho:tam,data_entrega:data,proximo_renovacao:renov||null,assinado:assn});
+  const period=document.getElementById('epi_period')?.value||'180';
+  const periodLabel={'7':'semanal','15':'quinzenal','30':'mensal','180':'semestral','365':'anual'}[period]||'semestral';
+  const{error}=await sb.from('epis').insert({colaborador_id:cid,tipo,tamanho:tam,data_entrega:data,proximo_renovacao:renov||null,assinado:assn,periodicidade:periodLabel});
   if(error){alert('Erro: '+error.message);return;}
   document.getElementById('modalEPI').remove();
   loadEPIs();
@@ -1400,16 +1431,20 @@ async function loadMeusEPIs(){
   const now=new Date();
   let html='<div style="display:flex;flex-direction:column;gap:8px">';
   data.forEach(r=>{
-    const entrega=r.data_entrega?new Date(r.data_entrega):null;
-    let meses=0;
-    if(entrega)meses=(now-entrega)/(1000*60*60*24*30);
+    const renovacao=r.proximo_renovacao?new Date(r.proximo_renovacao):null;
+    const period=r.periodicidade||'semestral';
+    const periodLabel={'semanal':'Semanal','quinzenal':'Quinzenal','mensal':'Mensal','semestral':'Semestral','anual':'Anual'}[period]||period;
     let badge='badge bg2',estado='OK',podeRenovar=false;
-    if(meses>=12){badge='badge br2';estado='Renovar';podeRenovar=true;}
-    else if(meses>=6){badge='badge ba2';estado='Atenção';podeRenovar=true;}
-    else if(meses===0){badge='badge bg2';estado='Recente';}
+    if(renovacao){
+      const diasParaRenovar=Math.round((renovacao-now)/(1000*60*60*24));
+      if(diasParaRenovar<=0){badge='badge br2';estado='Renovação disponível';podeRenovar=true;}
+      else if(diasParaRenovar<=7){badge='badge ba2';estado='Renovação em '+diasParaRenovar+' dia(s)';}
+      else if(diasParaRenovar<=30){badge='badge ba2';estado='Renovação em '+diasParaRenovar+' dias';}
+      else{badge='badge bg2';estado='Válido até '+renovacao.toLocaleDateString('pt-PT');}
+    }
     html+=`<div style="background:#fff;border:0.5px solid #d4d2ca;border-radius:10px;padding:12px 14px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
       <div>
-        <strong>${r.tipo||'—'}</strong> ${r.tamanho?'('+r.tamanho+')':''}
+        <strong>${r.tipo||'—'}</strong> ${r.tamanho?'('+r.tamanho+')':''} <span style="font-size:11px;color:var(--text2)">· ${periodLabel}</span>
         <div style="font-size:12px;color:var(--text2)">Entregue: ${r.data_entrega||'—'}</div>
       </div>
       <div style="display:flex;align-items:center;gap:8px">
