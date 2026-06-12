@@ -101,12 +101,12 @@ canvas{border:1px solid var(--border);border-radius:8px;cursor:crosshair;display
 }
 
 /* Menu colapsável */
-#sidebar { width: 220px; min-width: 220px; transition: width 0.2s, min-width 0.2s; overflow: hidden; }
-#sidebar.collapsed { width: 52px; min-width: 52px; }
-#sidebar.collapsed .ni-text, #sidebar.collapsed .nav-sep, #sidebar.collapsed .user-name, #sidebar.collapsed .logo-text { display: none !important; }
-#sidebar.collapsed .nav-logo { justify-content: center; }
+#sidebar { transition: transform 0.25s ease, width 0.25s ease; }
+#sidebar.hidden-menu { transform: translateX(-100%); width: 0 !important; min-width: 0 !important; overflow: hidden; }
 .ni { display: flex; align-items: center; gap: 10px; }
 .ni i { flex-shrink: 0; }
+.hamburger-btn { background: none; border: none; cursor: pointer; padding: 6px; color: var(--text2); display: flex; align-items: center; justify-content: center; border-radius: 8px; }
+.hamburger-btn:hover { background: var(--blu); }
 /* Notification bell */
 .notif-bell { position: relative; cursor: pointer; }
 .notif-badge { position: absolute; top: -4px; right: -4px; background: #E24B4A; color: #fff; font-size: 10px; font-weight: 600; width: 16px; height: 16px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
@@ -135,12 +135,12 @@ canvas{border:1px solid var(--border);border-radius:8px;cursor:crosshair;display
 
 <div class="pw" id="portalWrap">
   <div id="sidebarOverlay" onclick="document.getElementById('sidebar').classList.remove('open');document.getElementById('sidebarOverlay').style.display='none'" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:99"></div>
+<button class="hamburger-btn" onclick="toggleSidebar()" id="hamburguerBtn" title="Menu" style="position:fixed;top:12px;left:12px;z-index:999;background:#152B55;border-radius:8px;padding:8px;display:none">
+  <i id="hamburguerIcon" class="ti ti-menu-2" style="font-size:18px;color:#fff"></i>
+</button>
 <div class="sb" id="sidebar">
-    <div class="sb-logo" style="display:flex;align-items:center;justify-content:space-between">
-      <span class="logo-text">FORTIX<span style="color:var(--blue)">.</span></span>
-      <button onclick="toggleSidebar()" style="background:none;border:none;cursor:pointer;color:var(--text2);padding:4px;flex-shrink:0" title="Minimizar menu">
-        <i id="sidebarIcon" class="ti ti-layout-sidebar-left-collapse" style="font-size:18px"></i>
-      </button>
+    <div class="sb-logo">
+      FORTIX<span style="color:var(--blue)">.</span>
     </div>
     <div class="sb-user">
       <div class="sb-av" id="sbAv">?</div>
@@ -157,7 +157,11 @@ canvas{border:1px solid var(--border);border-radius:8px;cursor:crosshair;display
       </div>
       <div id="notifLista"></div>
     </div>
-    <div class="nav-sep">Menu</div>
+    <div class="nav-sep" onclick="toggleNavSection('menuItems','chevMenu')" style="cursor:pointer;display:flex;align-items:center;justify-content:space-between">
+      <span>Menu</span>
+      <i id="chevMenu" class="ti ti-chevron-down" style="font-size:13px;transition:transform 0.2s"></i>
+    </div>
+    <div id="menuItems" style="overflow:hidden;max-height:500px;transition:max-height 0.25s ease">
     <div class="ni active" id="n-dash" onclick="showP('dash')"><i class="ti ti-home"></i> <span class="ni-text">Dashboard</span></div>
     <div class="ni" id="n-ponto" onclick="showP('ponto')"><i class="ti ti-clock"></i> <span class="ni-text">Folha de ponto</span></div>
     <div class="ni" id="n-recibos" onclick="showP('recibos')"><i class="ti ti-file-invoice"></i> <span class="ni-text">Recibos</span></div>
@@ -165,8 +169,13 @@ canvas{border:1px solid var(--border);border-radius:8px;cursor:crosshair;display
     <div class="ni" id="n-ficha" onclick="showP('ficha')"><i class="ti ti-id-badge-2"></i> <span class="ni-text">Minha ficha</span></div>
       <div class="ni" id="n-meusdocs" onclick="showP('meusdocs')"><i class="ti ti-files"></i> <span class="ni-text">Meus documentos</span></div>
       <div class="ni" id="n-meusepis" onclick="showP('meusepis')"><i class="ti ti-shield-check"></i> <span class="ni-text">Meus EPIs</span></div>
+    </div>
     <div id="admNav" class="hidden">
-      <div class="nav-sep">Administração</div>
+      <div class="nav-sep" onclick="toggleNavSection('admItems','chevAdm')" style="cursor:pointer;display:flex;align-items:center;justify-content:space-between">
+        <span>Administração</span>
+        <i id="chevAdm" class="ti ti-chevron-down" style="font-size:13px;transition:transform 0.2s"></i>
+      </div>
+      <div id="admItems" style="overflow:hidden;max-height:600px;transition:max-height 0.25s ease">
       <div class="ni" id="n-acolab" onclick="showP('acolab')"><i class="ti ti-users"></i> <span class="ni-text">Colaboradores</span></div>
       <div class="ni" id="n-apontos" onclick="showP('apontos')"><i class="ti ti-report"></i> <span class="ni-text">Relatório pontos</span></div>
       <div class="ni" id="n-arecibos" onclick="showP('arecibos')"><i class="ti ti-upload"></i> <span class="ni-text">Carregar recibos</span></div>
@@ -176,6 +185,8 @@ canvas{border:1px solid var(--border);border-radius:8px;cursor:crosshair;display
       <div class="ni" id="n-ausencias" onclick="showP('ausencias')"><i class="ti ti-calendar-off"></i> <span class="ni-text">Ausências</span></div>
       <div class="ni" id="n-epis" onclick="showP('epis')"><i class="ti ti-shield-check"></i> <span class="ni-text">Gestão EPIs</span></div>
       <div class="ni" id="n-alertas" onclick="showP('alertas')"><i class="ti ti-bell"></i> <span class="ni-text">Alertas docs</span></div>
+    </div>
+      </div>
     </div>
     <div class="nl" onclick="doLogout()"><i class="ti ti-logout"></i> Sair</div>
   </div>
