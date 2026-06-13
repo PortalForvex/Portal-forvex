@@ -85,10 +85,11 @@ function startClock(){
 }
 
 function showP(page){
-  ['dash','ponto','recibos','docs','ficha','acolab','apontos','arecibos','adocs','assinaturas','relatorio','epis','alertas','meusepis','meusdocs'].forEach(p=>{
+  ['dash','dashadm','ponto','recibos','docs','ficha','acolab','apontos','arecibos','adocs','assinaturas','relatorio','epis','alertas','meusepis','meusdocs','ausencias'].forEach(p=>{
     const el=document.getElementById('p-'+p);if(el)el.classList.add('hidden');
     const n=document.getElementById('n-'+p);if(n)n.classList.remove('active');
   });
+  const np=document.getElementById('notifPanel');if(np)np.classList.remove('open');
   const el=document.getElementById('p-'+page);if(el)el.classList.remove('hidden');
   const nav=document.getElementById('n-'+page);if(nav)nav.classList.add('active');
   if(page==='ponto')loadPonto();
@@ -1769,30 +1770,25 @@ function toggleAusDetalhe(id){
 // ─────────────────────────────────────────────────────
 async function loadDashAdm(){
   if(!cu||!cu.is_admin)return;
+  const hoje=new Date().toISOString().split('T')[0];
   const now=new Date();
-  const mesAtual=now.getFullYear()+'-'+(String(now.getMonth()+1).padStart(2,'0'));
-  const inicio=mesAtual+'-01';
-  const fim=new Date(now.getFullYear(),now.getMonth()+1,0).toISOString().split('T')[0];
-  const hoje=now.toISOString().split('T')[0];
 
-  // Fetch all data in parallel
   const[
     {count:totalColabs},
-    {count:pendentes},
+    {data:fichasPendentes},
     {count:recibosNaoAssinados},
-    {data:episData},
+    {data:episRenovar},
     {data:fichasData},
     {count:registosHoje}
   ]=await Promise.all([
     sb.from('colaboradores').select('*',{count:'exact',head:true}).eq('ativo',true),
-    sb.from('colaboradores').select('*',{count:'exact',head:true}).eq('ficha_pendente',true),
+    sb.from('colaboradores').select('id,nome,nif').eq('ficha_pendente',true).eq('ativo',true),
     sb.from('recibos').select('*',{count:'exact',head:true}).eq('assinado',false),
-    sb.from('epis').select('proximo_renovacao').lte('proximo_renovacao',hoje),
+    sb.from('epis').select('*,colaboradores(nome)').lte('proximo_renovacao',hoje),
     sb.from('fichas').select('validade_doc').not('validade_doc','is',null),
     sb.from('ponto').select('*',{count:'exact',head:true}).eq('data',hoje)
   ]);
 
-  // Count docs expiring in 90 days
   const em90=new Date();em90.setDate(em90.getDate()+90);
   const docsExpirando=(fichasData||[]).filter(f=>{
     if(!f.validade_doc)return false;
@@ -1800,7 +1796,31 @@ async function loadDashAdm(){
     return v<=em90&&v>=now;
   }).length;
 
-  const episRenovar=(episData||[]).length;
+  const pendentes=(fichasPendentes||[]).length;
+  const nEpisRenovar=(episRenovar||[]).length;
+
+  // Build fichas pendentes expandable list
+  const fichasHTML=(fichasPendentes||[]).map(c=>`
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:0.5px solid #E8C97A;flex-wrap:wrap;gap:8px">
+      <div>
+        <div style="font-size:13px;font-weight:500">${c.nome}</div>
+        <div style="font-size:12px;color:#854F0B">NIF: ${c.nif}</div>
+      </div>
+      <button onclick="window.open('https://fortix-solutions.github.io/Ficha-Colaborador-Fortix/?adm=1&nif=${c.nif}','_blank')" style="font-size:12px;padding:5px 12px;border-radius:8px;border:none;background:#BA7517;color:#fff;cursor:pointer">Completar ficha</button>
+    </div>`).join('');
+
+  // Build EPIs expandable list
+  const episHTML=(episRenovar||[]).map(e=>{
+    const nome=e.colaboradores?.nome||'—';
+    const diasAtraso=e.proximo_renovacao?Math.abs(Math.round((new Date(e.proximo_renovacao)-now)/(1000*60*60*24))):0;
+    return `<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:0.5px solid #F09595;flex-wrap:wrap;gap:8px">
+      <div>
+        <div style="font-size:13px;font-weight:500">${nome}</div>
+        <div style="font-size:12px;color:#A32D2D">${e.tipo||'—'} ${e.tamanho?'('+e.tamanho+')':''} · Expirou há ${diasAtraso} dia(s)</div>
+      </div>
+      <button onclick="showP('epis')" style="font-size:12px;padding:5px 12px;border-radius:8px;border:none;background:#152B55;color:#fff;cursor:pointer">Ver EPI</button>
+    </div>`;
+  }).join('');
 
   const dashEl=document.getElementById('dashAdmContent')||document.getElementById('dashContent');
   if(!dashEl)return;
@@ -1811,17 +1831,19 @@ async function loadDashAdm(){
         <div style="font-size:12px;color:var(--text2)">Colaboradores ativos</div>
         <div style="font-size:28px;font-weight:600;color:#152B55">${totalColabs||0}</div>
       </div>
-      <div style="background:${pendentes?'#FAEEDA':'#EAF3DE'};border-radius:12px;padding:1rem;cursor:pointer" onclick="showP('acolab')">
+      <div style="background:${pendentes?'#FAEEDA':'#EAF3DE'};border-radius:12px;padding:1rem;cursor:pointer" onclick="toggleDashPanel('fichasPendPanel')">
         <div style="font-size:12px;color:${pendentes?'#854F0B':'#3B6D11'}">Fichas pendentes</div>
         <div style="font-size:28px;font-weight:600;color:${pendentes?'#BA7517':'#3B6D11'}">${pendentes||0}</div>
+        ${pendentes?'<div style="font-size:11px;color:#854F0B;margin-top:4px">▼ clique para ver</div>':''}
       </div>
       <div style="background:${recibosNaoAssinados?'#FCEBEB':'#EAF3DE'};border-radius:12px;padding:1rem;cursor:pointer" onclick="showP('assinaturas')">
         <div style="font-size:12px;color:${recibosNaoAssinados?'#A32D2D':'#3B6D11'}">Recibos p/ assinar</div>
         <div style="font-size:28px;font-weight:600;color:${recibosNaoAssinados?'#E24B4A':'#3B6D11'}">${recibosNaoAssinados||0}</div>
       </div>
-      <div style="background:${episRenovar?'#FCEBEB':'#EAF3DE'};border-radius:12px;padding:1rem;cursor:pointer" onclick="showP('epis')">
-        <div style="font-size:12px;color:${episRenovar?'#A32D2D':'#3B6D11'}">EPIs a renovar</div>
-        <div style="font-size:28px;font-weight:600;color:${episRenovar?'#E24B4A':'#3B6D11'}">${episRenovar||0}</div>
+      <div style="background:${nEpisRenovar?'#FCEBEB':'#EAF3DE'};border-radius:12px;padding:1rem;cursor:pointer" onclick="toggleDashPanel('episRenovPanel')">
+        <div style="font-size:12px;color:${nEpisRenovar?'#A32D2D':'#3B6D11'}">EPIs a renovar</div>
+        <div style="font-size:28px;font-weight:600;color:${nEpisRenovar?'#E24B4A':'#3B6D11'}">${nEpisRenovar||0}</div>
+        ${nEpisRenovar?'<div style="font-size:11px;color:#A32D2D;margin-top:4px">▼ clique para ver</div>':''}
       </div>
       <div style="background:${docsExpirando?'#FAEEDA':'#EAF3DE'};border-radius:12px;padding:1rem;cursor:pointer" onclick="showP('alertas')">
         <div style="font-size:12px;color:${docsExpirando?'#854F0B':'#3B6D11'}">Docs a expirar</div>
@@ -1831,5 +1853,29 @@ async function loadDashAdm(){
         <div style="font-size:12px;color:#3B6D11">Registos hoje</div>
         <div style="font-size:28px;font-weight:600;color:#3B6D11">${registosHoje||0}</div>
       </div>
-    </div>`;
+    </div>
+
+    ${pendentes?`<div id="fichasPendPanel" style="display:none;background:#fff;border:0.5px solid #E8C97A;border-radius:12px;overflow:hidden;margin-bottom:1rem">
+      <div style="padding:10px 14px;background:#FAEEDA;border-bottom:0.5px solid #E8C97A;display:flex;align-items:center;justify-content:space-between">
+        <div style="font-size:14px;font-weight:500;color:#854F0B"><i class="ti ti-id-badge"></i> Fichas pendentes</div>
+        <button onclick="toggleDashPanel('fichasPendPanel')" style="background:none;border:none;cursor:pointer;color:#854F0B;font-size:18px">×</button>
+      </div>
+      ${fichasHTML}
+    </div>`:''}
+
+    ${nEpisRenovar?`<div id="episRenovPanel" style="display:none;background:#fff;border:0.5px solid #F09595;border-radius:12px;overflow:hidden;margin-bottom:1rem">
+      <div style="padding:10px 14px;background:#FCEBEB;border-bottom:0.5px solid #F09595;display:flex;align-items:center;justify-content:space-between">
+        <div style="font-size:14px;font-weight:500;color:#A32D2D"><i class="ti ti-shield-x"></i> EPIs a renovar</div>
+        <button onclick="toggleDashPanel('episRenovPanel')" style="background:none;border:none;cursor:pointer;color:#A32D2D;font-size:18px">×</button>
+      </div>
+      ${episHTML}
+    </div>`:''}`;
 }
+
+function toggleDashPanel(id){
+  const el=document.getElementById(id);
+  if(!el)return;
+  el.style.display=el.style.display==='none'?'block':'none';
+}
+
+
