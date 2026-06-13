@@ -39,6 +39,7 @@ function iniciarPortal(){
   startClock();showP('dash');
   initNotificacoes();
   initSessionTimer();
+  initPushNotifications();
   // Add menu toggle button to sidebar
   const sbLogo=document.querySelector('.sb-logo');
   if(sbLogo&&!document.getElementById('sidebarToggleBtn')){
@@ -2155,5 +2156,44 @@ async function initHistorico(){
     });
   }
   loadHistorico();
+}
+
+
+// ─────────────────────────────────────────────────────
+// NOTIFICAÇÕES PUSH - FIREBASE
+// ─────────────────────────────────────────────────────
+const VAPID_KEY = 'BGNt8yKFZCWKfV1hKcoLmYGycCDOl4fHGUzQ3NgZkZ3PyepLZ_46OQCUO73Z_xG6vIB6PKpVZvMuvG4XOjefH4o';
+
+async function initPushNotifications(){
+  try {
+    if(!('Notification' in window) || !firebase.messaging) return;
+    const messaging = firebase.messaging();
+
+    // Request permission
+    const permission = await Notification.requestPermission();
+    if(permission !== 'granted') return;
+
+    // Get token
+    const token = await messaging.getToken({ vapidKey: VAPID_KEY });
+    if(!token || !cu) return;
+
+    // Save token to Supabase
+    await sb.from('colaboradores').update({ push_token: token }).eq('id', cu.id);
+    console.log('Push token saved');
+
+    // Handle foreground messages
+    messaging.onMessage(function(payload){
+      const { title, body } = payload.notification || {};
+      if(title) toast('🔔 ' + title + (body ? ' — ' + body : ''));
+    });
+  } catch(e) {
+    console.log('Push notifications not available:', e.message);
+  }
+}
+
+async function enviarPushColab(colaboradorId, titulo, corpo){
+  // Store notification in DB - the actual push is sent server-side
+  // For now create in-app notification
+  await criarNotificacao(colaboradorId, 'push', titulo, corpo);
 }
 
