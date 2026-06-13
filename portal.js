@@ -1613,7 +1613,10 @@ function toggleNotifPanel(e){
   if(e)e.stopPropagation();
   const panel=document.getElementById('notifPanel');
   panel.classList.toggle('open');
-  if(panel.classList.contains('open'))loadNotificacoes();
+  if(panel.classList.contains('open')){
+    if(cu&&cu.is_admin) loadAdmNotifPanel();
+    else loadNotificacoes();
+  }
 }
 
 document.addEventListener('click',function(e){
@@ -1688,13 +1691,114 @@ async function initNotificacoes(){
   if(!cu)return;
   const bell=document.getElementById('notifBell');
   if(bell)bell.style.display='flex';
-  // Count unread
-  const{count}=await sb.from('notificacoes').select('*',{count:'exact',head:true}).eq('colaborador_id',cu.id).eq('lida',false);
+
+  if(cu.is_admin){
+    // For ADM: count pending items
+    await loadAdmNotifBadge();
+  } else {
+    // For colaborador: count unread notifications
+    const{count}=await sb.from('notificacoes').select('*',{count:'exact',head:true}).eq('colaborador_id',cu.id).eq('lida',false);
+    const badge=document.getElementById('notifBadge');
+    if(badge){
+      badge.textContent=count||0;
+      badge.style.display=(count&&count>0)?'flex':'none';
+    }
+  }
+}
+
+async function loadAdmNotifBadge(){
+  const hoje=new Date().toISOString().split('T')[0];
+  const now=new Date();
+  const em30=new Date();em30.setDate(em30.getDate()+30);
+
+  const[
+    {count:fichasPend},
+    {data:episRen},
+    {data:fichasDoc},
+    {count:recibos}
+  ]=await Promise.all([
+    sb.from('colaboradores').select('*',{count:'exact',head:true}).eq('ficha_pendente',true).eq('ativo',true),
+    sb.from('epis').select('proximo_renovacao').lte('proximo_renovacao',hoje),
+    sb.from('fichas').select('validade_doc').not('validade_doc','is',null),
+    sb.from('recibos').select('*',{count:'exact',head:true}).eq('assinado',false)
+  ]);
+
+  const docsExp=(fichasDoc||[]).filter(f=>{
+    if(!f.validade_doc)return false;
+    const v=new Date(f.validade_doc);
+    return v<=em30&&v>=now;
+  }).length;
+
+  const total=(fichasPend||0)+(episRen||[]).length+docsExp+(recibos||0);
   const badge=document.getElementById('notifBadge');
   if(badge){
-    badge.textContent=count||0;
-    badge.style.display=(count&&count>0)?'flex':'none';
+    badge.textContent=total;
+    badge.style.display=total>0?'flex':'none';
   }
+
+  // Store for panel
+  window._admAlerts={fichasPend:fichasPend||0,episRen:(episRen||[]).length,docsExp,recibos:recibos||0};
+}
+
+async function loadAdmNotifPanel(){
+  const lista=document.getElementById('notifLista');
+  if(!lista)return;
+  const a=window._admAlerts||{fichasPend:0,episRen:0,docsExp:0,recibos:0};
+  let html='';
+
+  if(a.fichasPend>0){
+    html+=`<div class="notif-item unread" onclick="showP('acolab');toggleNotifPanel()">
+      <div style="width:34px;height:34px;border-radius:50%;background:#FAEEDA;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+        <i class="ti ti-id-badge" style="font-size:16px;color:#BA7517"></i>
+      </div>
+      <div style="flex:1">
+        <div style="font-size:13px;font-weight:600;color:var(--text)">${a.fichasPend} ficha(s) pendente(s)</div>
+        <div style="font-size:12px;color:var(--text2);margin-top:2px">Colaboradores aguardam preenchimento ADM</div>
+      </div>
+    </div>`;
+  }
+
+  if(a.episRen>0){
+    html+=`<div class="notif-item unread" onclick="showP('epis');toggleNotifPanel()">
+      <div style="width:34px;height:34px;border-radius:50%;background:#FCEBEB;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+        <i class="ti ti-shield-x" style="font-size:16px;color:#E24B4A"></i>
+      </div>
+      <div style="flex:1">
+        <div style="font-size:13px;font-weight:600;color:var(--text)">${a.episRen} EPI(s) a renovar</div>
+        <div style="font-size:12px;color:var(--text2);margin-top:2px">Data de renovação ultrapassada</div>
+      </div>
+    </div>`;
+  }
+
+  if(a.docsExp>0){
+    html+=`<div class="notif-item unread" onclick="showP('alertas');toggleNotifPanel()">
+      <div style="width:34px;height:34px;border-radius:50%;background:#FAEEDA;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+        <i class="ti ti-alert-triangle" style="font-size:16px;color:#BA7517"></i>
+      </div>
+      <div style="flex:1">
+        <div style="font-size:13px;font-weight:600;color:var(--text)">${a.docsExp} documento(s) a expirar</div>
+        <div style="font-size:12px;color:var(--text2);margin-top:2px">Expira nos próximos 30 dias</div>
+      </div>
+    </div>`;
+  }
+
+  if(a.recibos>0){
+    html+=`<div class="notif-item unread" onclick="showP('assinaturas');toggleNotifPanel()">
+      <div style="width:34px;height:34px;border-radius:50%;background:#E6F1FB;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+        <i class="ti ti-file-invoice" style="font-size:16px;color:#185FA5"></i>
+      </div>
+      <div style="flex:1">
+        <div style="font-size:13px;font-weight:600;color:var(--text)">${a.recibos} recibo(s) por assinar</div>
+        <div style="font-size:12px;color:var(--text2);margin-top:2px">Aguardam assinatura dos colaboradores</div>
+      </div>
+    </div>`;
+  }
+
+  if(!html){
+    html='<div style="padding:2rem;text-align:center;color:var(--text2);font-size:13px"><i class="ti ti-circle-check" style="font-size:32px;display:block;margin-bottom:8px;color:#3B6D11;opacity:0.6"></i>Tudo em ordem!</div>';
+  }
+
+  lista.innerHTML=html;
 }
 
 // ─────────────────────────────────────────────────────
@@ -2081,8 +2185,16 @@ async function exportarAusenciasExcel(){
 async function exportarPontosPDF(){
   const{data}=await sb.from('ponto').select('*,colaboradores(nome)').order('data',{ascending:false}).limit(200);
   if(!data||!data.length){toast('Sem dados','erro');return;}
-  const rows=data.map(r=>[r.colaboradores?.nome||'—',r.data,r.entrada||'',r.saida||'',r.total_horas||'']);
-  exportarRelatorioPDF('Relatório de ponto',['Colaborador','Data','Entrada','Saída','Total horas'],rows);
+  const rows=data.map(r=>[
+    r.colaboradores?.nome||'—',
+    r.data,
+    r.entrada||'—',
+    r.inicio_pausa||'—',
+    r.fim_pausa||'—',
+    r.saida||'—',
+    r.total_horas||'—'
+  ]);
+  exportarRelatorioPDF('Relatório de ponto',['Colaborador','Data','Entrada','Início pausa','Fim pausa','Saída','Total horas'],rows);
 }
 
 async function exportarPontosExcel(){
