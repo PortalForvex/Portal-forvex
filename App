@@ -1,0 +1,24 @@
+importScripts('https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js');
+importScripts('https://www.gstatic.com/firebasejs/10.12.0/firebase-messaging-compat.js');
+
+firebase.initializeApp({
+  apiKey: "AIzaSyCToG7rQr04ba0_kuHBe0ms2xqlS5oujfk",
+  authDomain: "fortix-portal.firebaseapp.com",
+  projectId: "fortix-portal",
+  storageBucket: "fortix-portal.firebasestorage.app",
+  messagingSenderId: "258742162227",
+  appId: "1:258742162227:web:160ae7fd65e3b0a2d3a446"
+});
+
+const messaging = firebase.messaging();
+
+messaging.onBackgroundMessage(function(payload) {
+  const { title, body, icon } = payload.notification;
+  self.registration.showNotification(title, {
+    body: body,
+    icon: icon || '/icon-192.png',
+    badge: '/icon-192.png',
+    tag: 'fortix-notif',
+    renotify: true
+  });
+});
