@@ -394,7 +394,9 @@ canvas{border:1px solid var(--border);border-radius:8px;cursor:crosshair;display
           <select id="pontosFilterColab" onchange="loadAPontos()" style="font-size:13px;padding:6px 10px;border-radius:8px;border:1px solid #d4d2ca">
             <option value="">Todos os colaboradores</option>
           </select>
-          <input type="date" id="pontosFilterData" onchange="loadAPontos()" style="font-size:13px;padding:6px 10px;border-radius:8px;border:1px solid #d4d2ca" placeholder="Filtrar por data" />
+          <input type="date" id="pontosDataInicio" onchange="loadAPontos()" style="font-size:13px;padding:6px 10px;border-radius:8px;border:1px solid #d4d2ca" title="Data início" />
+          <span style="font-size:13px;color:var(--text2)">até</span>
+          <input type="date" id="pontosDataFim" onchange="loadAPontos()" style="font-size:13px;padding:6px 10px;border-radius:8px;border:1px solid #d4d2ca" title="Data fim" />
           <button onclick="exportarPontosPDF()" style="font-size:13px;padding:6px 12px;border-radius:8px;border:0.5px solid #F09595;background:#FCEBEB;color:#A32D2D;cursor:pointer;display:flex;align-items:center;gap:4px"><i class="ti ti-file-type-pdf"></i> PDF</button>
           <button onclick="exportarPontosExcel()" style="font-size:13px;padding:6px 12px;border-radius:8px;border:0.5px solid #C0DD97;background:#EAF3DE;color:#3B6D11;cursor:pointer;display:flex;align-items:center;gap:4px"><i class="ti ti-file-type-xls"></i> Excel</button>
         </div>
@@ -453,7 +455,9 @@ canvas{border:1px solid var(--border);border-radius:8px;cursor:crosshair;display
     <div id="p-ausencias" class="hidden">
       <div class="pt">Relatório de ausências</div>
       <div style="display:flex;gap:8px;margin-bottom:1rem;flex-wrap:wrap;align-items:center">
-        <select id="ausMes" onchange="loadAusencias()" style="font-size:13px;padding:6px 10px;border-radius:8px;border:1px solid #d4d2ca"></select>
+        <input type="date" id="ausDataInicio" onchange="loadAusencias()" style="font-size:13px;padding:6px 10px;border-radius:8px;border:1px solid #d4d2ca" title="Data início" />
+        <span style="font-size:13px;color:var(--text2)">até</span>
+        <input type="date" id="ausDataFim" onchange="loadAusencias()" style="font-size:13px;padding:6px 10px;border-radius:8px;border:1px solid #d4d2ca" title="Data fim" />
         <select id="ausColab" onchange="loadAusencias()" style="font-size:13px;padding:6px 10px;border-radius:8px;border:1px solid #d4d2ca"><option value="">Todos os colaboradores</option></select>
         <button onclick="exportarAusenciasPDF()" style="font-size:13px;padding:6px 12px;border-radius:8px;border:0.5px solid #F09595;background:#FCEBEB;color:#A32D2D;cursor:pointer;display:flex;align-items:center;gap:4px"><i class="ti ti-file-type-pdf"></i> PDF</button>
         <button onclick="exportarAusenciasExcel()" style="font-size:13px;padding:6px 12px;border-radius:8px;border:0.5px solid #C0DD97;background:#EAF3DE;color:#3B6D11;cursor:pointer;display:flex;align-items:center;gap:4px"><i class="ti ti-file-type-xls"></i> Excel</button>
@@ -465,7 +469,9 @@ canvas{border:1px solid var(--border);border-radius:8px;cursor:crosshair;display
     <div id="p-relatorio" class="hidden">
       <div class="pt">Relatório mensal de horas</div>
       <div style="display:flex;gap:8px;margin-bottom:1rem;flex-wrap:wrap;align-items:center">
-        <select id="relMes" onchange="loadRelatorio()" style="font-size:13px;padding:6px 10px;border-radius:8px;border:1px solid #d4d2ca"></select>
+        <input type="date" id="relDataInicio" onchange="loadRelatorio()" style="font-size:13px;padding:6px 10px;border-radius:8px;border:1px solid #d4d2ca" title="Data início" />
+        <span style="font-size:13px;color:var(--text2)">até</span>
+        <input type="date" id="relDataFim" onchange="loadRelatorio()" style="font-size:13px;padding:6px 10px;border-radius:8px;border:1px solid #d4d2ca" title="Data fim" />
         <select id="relColab" onchange="loadRelatorio()" style="font-size:13px;padding:6px 10px;border-radius:8px;border:1px solid #d4d2ca"><option value="">Todos os colaboradores</option></select>
         <button onclick="exportarRelatorioHorasPDF()" style="font-size:13px;padding:6px 12px;border-radius:8px;border:0.5px solid #F09595;background:#FCEBEB;color:#A32D2D;cursor:pointer;display:flex;align-items:center;gap:4px"><i class="ti ti-file-type-pdf"></i> PDF</button>
         <button onclick="exportarRelatorioHorasExcel()" style="font-size:13px;padding:6px 12px;border-radius:8px;border:0.5px solid #C0DD97;background:#EAF3DE;color:#3B6D11;cursor:pointer;display:flex;align-items:center;gap:4px"><i class="ti ti-file-type-xls"></i> Excel</button>
