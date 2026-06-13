@@ -578,9 +578,13 @@ async function loadAPontos(){
     });
   }
 
-  let query=sb.from('ponto').select('*,colaboradores(nome)').order('data',{ascending:false}).limit(100);
+  const dataInicio=document.getElementById('pontosDataInicio')?.value||'';
+  const dataFim=document.getElementById('pontosDataFim')?.value||'';
+
+  let query=sb.from('ponto').select('*,colaboradores(nome)').order('data',{ascending:false}).limit(500);
   if(colabId)query=query.eq('colaborador_id',colabId);
-  if(dataFiltro)query=query.eq('data',dataFiltro);
+  if(dataInicio)query=query.gte('data',dataInicio);
+  if(dataFim)query=query.lte('data',dataFim);
   const{data}=await query;
   const el=document.getElementById('aPontosLista');
   if(!data||!data.length){el.innerHTML='<p style="color:var(--text2);font-size:13px;text-align:center;padding:1rem">Sem registos</p>';return;}
@@ -1076,13 +1080,13 @@ async function initRelatorio(){
 }
 
 async function loadRelatorio(){
-  const mes=document.getElementById('relMes')?.value||'';
+  const inicio=document.getElementById('relDataInicio')?.value||'';
+  const fim=document.getElementById('relDataFim')?.value||'';
   const colabId=document.getElementById('relColab')?.value||'';
-  if(!mes)return;
-  const[ano,m]=mes.split('-');
-  const inicio=mes+'-01';
-  const fim=new Date(parseInt(ano),parseInt(m),0).toISOString().split('T')[0];
-  let query=sb.from('ponto').select('*,colaboradores(nome)').gte('data',inicio).lte('data',fim);
+  if(!inicio&&!fim)return;
+  let query=sb.from('ponto').select('*,colaboradores(nome)').order('data',{ascending:false}).limit(500);
+  if(inicio)query=query.gte('data',inicio);
+  if(fim)query=query.lte('data',fim);
   if(colabId)query=query.eq('colaborador_id',colabId);
   const{data}=await query;
   if(!data){return;}
@@ -1820,19 +1824,14 @@ async function loadAdmNotifPanel(){
 // RELATÓRIO DE AUSÊNCIAS
 // ─────────────────────────────────────────────────────
 async function initAusencias(){
-  const sel=document.getElementById('ausMes');
-  if(!sel)return;
-  if(sel.options.length===0){
-    const now=new Date();
-    for(let i=0;i<12;i++){
-      const d=new Date(now.getFullYear(),now.getMonth()-i,1);
-      const val=d.getFullYear()+'-'+(String(d.getMonth()+1).padStart(2,'0'));
-      const label=d.toLocaleDateString('pt-PT',{month:'long',year:'numeric'});
-      const opt=document.createElement('option');
-      opt.value=val;opt.textContent=label;
-      sel.appendChild(opt);
-    }
-  }
+  // Set default date range to current month
+  const now=new Date();
+  const inicio=now.getFullYear()+'-'+(String(now.getMonth()+1).padStart(2,'0'))+'-01';
+  const fim=new Date(now.getFullYear(),now.getMonth()+1,0).toISOString().split('T')[0];
+  const iniEl=document.getElementById('ausDataInicio');
+  const fimEl=document.getElementById('ausDataFim');
+  if(iniEl&&!iniEl.value)iniEl.value=inicio;
+  if(fimEl&&!fimEl.value)fimEl.value=fim;
   const selC=document.getElementById('ausColab');
   if(selC && selC.options.length<=1){
     const{data:colabs}=await sb.from('colaboradores').select('id,nome').eq('ativo',true).order('nome');
@@ -1855,12 +1854,10 @@ function getDiasUteis(ano,mes){
 }
 
 async function loadAusencias(){
-  const mes=document.getElementById('ausMes')?.value||'';
+  const inicio=document.getElementById('ausDataInicio')?.value||'';
+  const fim=document.getElementById('ausDataFim')?.value||'';
   const colabId=document.getElementById('ausColab')?.value||'';
-  if(!mes)return;
-  const[ano,m]=mes.split('-');
-  const inicio=mes+'-01';
-  const fim=new Date(parseInt(ano),parseInt(m),0).toISOString().split('T')[0];
+  if(!inicio&&!fim)return;
   const today=new Date().toISOString().split('T')[0];
 
   let query=sb.from('colaboradores').select('id,nome').eq('ativo',true).order('nome');
@@ -1868,7 +1865,17 @@ async function loadAusencias(){
   const{data:colabs}=await query;
   if(!colabs||!colabs.length)return;
 
-  const diasUteis=getDiasUteis(parseInt(ano),parseInt(m)).filter(d=>d<=today);
+  // Get business days in range
+  const diasUteis=[];
+  const startD=new Date(inicio||today);
+  const endD=new Date(fim||today);
+  for(let d=new Date(startD);d<=endD;d.setDate(d.getDate()+1)){
+    const dow=d.getDay();
+    if(dow!==0&&dow!==6){
+      const str=d.toISOString().split('T')[0];
+      if(str<=today)diasUteis.push(str);
+    }
+  }
 
   // Get all ponto records for this month
   const{data:pontos}=await sb.from('ponto').select('colaborador_id,data,entrada,saida').gte('data',inicio).lte('data',fim);
@@ -2112,7 +2119,9 @@ async function exportarRelatorioHorasPDF(){
   const[ano,m]=mes.split('-');
   const inicio=mes+'-01';
   const fim=new Date(parseInt(ano),parseInt(m),0).toISOString().split('T')[0];
-  let query=sb.from('ponto').select('*,colaboradores(nome)').gte('data',inicio).lte('data',fim);
+  let query=sb.from('ponto').select('*,colaboradores(nome)').order('data',{ascending:false}).limit(500);
+  if(inicio)query=query.gte('data',inicio);
+  if(fim)query=query.lte('data',fim);
   if(colabId)query=query.eq('colaborador_id',colabId);
   const{data}=await query;
   if(!data||!data.length){toast('Sem dados','erro');return;}
