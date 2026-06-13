@@ -566,7 +566,22 @@ async function criarColab(){
 }
 
 async function loadAPontos(){
-  const{data}=await sb.from('ponto').select('*,colaboradores(nome)').order('data',{ascending:false}).limit(50);
+  const colabId=document.getElementById('pontosFilterColab')?.value||'';
+  const dataFiltro=document.getElementById('pontosFilterData')?.value||'';
+
+  // Populate filter if empty
+  const sel=document.getElementById('pontosFilterColab');
+  if(sel&&sel.options.length<=1){
+    const{data:colabs}=await sb.from('colaboradores').select('id,nome').eq('ativo',true).order('nome');
+    if(colabs)colabs.forEach(c=>{
+      const o=document.createElement('option');o.value=c.id;o.textContent=c.nome;sel.appendChild(o);
+    });
+  }
+
+  let query=sb.from('ponto').select('*,colaboradores(nome)').order('data',{ascending:false}).limit(100);
+  if(colabId)query=query.eq('colaborador_id',colabId);
+  if(dataFiltro)query=query.eq('data',dataFiltro);
+  const{data}=await query;
   const el=document.getElementById('aPontosLista');
   if(!data||!data.length){el.innerHTML='<p style="color:var(--text2);font-size:13px;text-align:center;padding:1rem">Sem registos</p>';return;}
   pontosData=data;
