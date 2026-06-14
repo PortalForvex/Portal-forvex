@@ -479,10 +479,11 @@ canvas{border:1px solid var(--border);border-radius:8px;cursor:crosshair;display
 
     <div id="p-historico" class="hidden">
       <div class="pt">Histórico de alterações</div>
-      <div style="display:flex;gap:8px;margin-bottom:1rem;flex-wrap:wrap">
+      <div style="display:flex;gap:8px;margin-bottom:1rem;flex-wrap:wrap;align-items:center">
         <select id="histFilterColab" onchange="loadHistorico()" style="font-size:13px;padding:6px 10px;border-radius:8px;border:1px solid #d4d2ca">
           <option value="">Todos os colaboradores</option>
         </select>
+        <button onclick="limparHistorico()" style="font-size:13px;padding:6px 12px;border-radius:8px;border:0.5px solid #F09595;background:#FCEBEB;color:#A32D2D;cursor:pointer;display:flex;align-items:center;gap:4px"><i class="ti ti-trash"></i> Limpar tudo</button>
       </div>
       <div id="histContent"></div>
     </div>
