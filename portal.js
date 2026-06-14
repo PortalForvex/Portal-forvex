@@ -2354,6 +2354,24 @@ async function registarHistorico(colaboradorId, tipo, descricao, campos){
   }catch(e){}
 }
 
+async function eliminarHistorico(id){
+  if(!confirm('Eliminar este registo do histórico?'))return;
+  await sb.from('historico_alteracoes').delete().eq('id',id);
+  loadHistorico();
+  toast('Registo eliminado');
+}
+
+async function limparHistorico(){
+  const colabId=document.getElementById('histFilterColab')?.value||'';
+  const msg=colabId?'Eliminar todo o histórico deste colaborador?':'Eliminar TODO o histórico de alterações?';
+  if(!confirm(msg))return;
+  let query=sb.from('historico_alteracoes').delete().neq('id','00000000-0000-0000-0000-000000000000');
+  if(colabId)query=sb.from('historico_alteracoes').delete().eq('colaborador_id',colabId);
+  await query;
+  loadHistorico();
+  toast('Histórico eliminado');
+}
+
 async function loadHistorico(){
   const colabId=document.getElementById('histFilterColab')?.value||'';
   const el=document.getElementById('histContent');
@@ -2382,7 +2400,10 @@ async function loadHistorico(){
       <div style="flex:1">
         <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:4px">
           <div style="font-size:13px;font-weight:500;color:var(--text)">${h.descricao||'—'}</div>
-          <span style="font-size:11px;color:var(--text2)">${data_hora}</span>
+          <div style="display:flex;align-items:center;gap:8px">
+            <span style="font-size:11px;color:var(--text2)">${data_hora}</span>
+            <button onclick="eliminarHistorico('${h.id}')" style="background:none;border:none;cursor:pointer;color:#E24B4A;padding:0" title="Eliminar"><i class="ti ti-trash" style="font-size:14px"></i></button>
+          </div>
         </div>
         <div style="font-size:12px;color:var(--text2);margin-top:2px">Colaborador: <strong>${nome}</strong> · Por: ${h.feito_por||'—'}</div>
         ${camposHTML}
