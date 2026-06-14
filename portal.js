@@ -111,6 +111,8 @@ function showP(page){
   if(page==='ausencias')initAusencias();
   if(page==='dashadm')loadDashAdm();
   if(page==='historico')initHistorico();
+  if(page==='aniversarios')loadAniversarios();
+  if(page==='financeiro')initFinanceiro();
 }
 
 async function loadDashboard(){
@@ -2335,5 +2337,199 @@ async function enviarPushColab(colaboradorId, titulo, corpo){
   // Store notification in DB - the actual push is sent server-side
   // For now create in-app notification
   await criarNotificacao(colaboradorId, 'push', titulo, corpo);
+}
+
+
+// ─────────────────────────────────────────────────────
+// ANIVERSÁRIOS
+// ─────────────────────────────────────────────────────
+async function loadAniversarios(){
+  const el=document.getElementById('aniversariosContent');
+  if(!el)return;
+  const{data:fichas}=await sb.from('fichas').select('colaborador_id,data_nasc,colaboradores(nome)');
+  if(!fichas||!fichas.length){el.innerHTML='<p style="color:var(--text2);font-size:13px;text-align:center;padding:2rem">Sem datas de nascimento registadas nas fichas</p>';return;}
+
+  const hoje=new Date();
+  const anoAtual=hoje.getFullYear();
+
+  const lista=fichas.filter(f=>f.data_nasc).map(f=>{
+    const nasc=new Date(f.data_nasc);
+    const aniversario=new Date(anoAtual, nasc.getMonth(), nasc.getDate());
+    if(aniversario<hoje) aniversario.setFullYear(anoAtual+1);
+    const diasAte=Math.round((aniversario-hoje)/(1000*60*60*24));
+    const idade=anoAtual-nasc.getFullYear()+(diasAte>0?0:0);
+    return{
+      nome:f.colaboradores?.nome||'—',
+      data_nasc:f.data_nasc,
+      aniversario,
+      diasAte,
+      idade
+    };
+  }).sort((a,b)=>a.diasAte-b.diasAte);
+
+  let html='<div style="display:flex;flex-direction:column;gap:10px">';
+  lista.forEach(c=>{
+    const dataStr=c.aniversario.toLocaleDateString('pt-PT',{day:'numeric',month:'long'});
+    let badge,bg,border;
+    if(c.diasAte===0){badge='🎉 Hoje!';bg='#FAEEDA';border='#BA7517';}
+    else if(c.diasAte<=3){badge='Em '+c.diasAte+' dia(s)';bg='#FCEBEB';border='#E24B4A';}
+    else if(c.diasAte<=30){badge=dataStr;bg='#E6F1FB';border='#B5D4F4';}
+    else{badge=dataStr;bg='var(--bg)';border='var(--border)';}
+
+    html+=`<div style="background:${bg};border:0.5px solid ${border};border-radius:12px;padding:14px 16px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
+      <div style="display:flex;align-items:center;gap:12px">
+        <div style="width:40px;height:40px;border-radius:50%;background:${border};display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">🎂</div>
+        <div>
+          <div style="font-size:14px;font-weight:500;color:var(--text)">${c.nome}</div>
+          <div style="font-size:12px;color:var(--text2);margin-top:2px">${c.idade} anos · ${new Date(c.data_nasc).toLocaleDateString('pt-PT')}</div>
+        </div>
+      </div>
+      <span style="background:${border};color:#fff;padding:4px 14px;border-radius:20px;font-size:12px;font-weight:500">${badge}</span>
+    </div>`;
+  });
+  html+='</div>';
+  el.innerHTML=html;
+
+  // Update ADM bell badge if birthday in 3 days
+  const proximos=lista.filter(c=>c.diasAte<=3).length;
+  if(proximos>0) toast('🎂 '+proximos+' aniversário(s) nos próximos 3 dias!');
+}
+
+// ─────────────────────────────────────────────────────
+// FINANCEIRO
+// ─────────────────────────────────────────────────────
+async function initFinanceiro(){
+  const now=new Date();
+  const inicio=now.getFullYear()+'-'+(String(now.getMonth()+1).padStart(2,'0'))+'-01';
+  const fim=new Date(now.getFullYear(),now.getMonth()+1,0).toISOString().split('T')[0];
+  const iniEl=document.getElementById('finDataInicio');
+  const fimEl=document.getElementById('finDataFim');
+  if(iniEl&&!iniEl.value)iniEl.value=inicio;
+  if(fimEl&&!fimEl.value)fimEl.value=fim;
+
+  // Populate colaborador filter
+  const sel=document.getElementById('finColab');
+  if(sel&&sel.options.length<=1){
+    const{data:colabs}=await sb.from('colaboradores').select('id,nome').eq('ativo',true).order('nome');
+    if(colabs)colabs.forEach(c=>{
+      const o=document.createElement('option');o.value=c.id;o.textContent=c.nome;sel.appendChild(o);
+    });
+  }
+  loadFinanceiro();
+}
+
+async function loadFinanceiro(){
+  const inicio=document.getElementById('finDataInicio')?.value||'';
+  const fim=document.getElementById('finDataFim')?.value||'';
+  const colabId=document.getElementById('finColab')?.value||'';
+  if(!inicio&&!fim)return;
+
+  // Get colaboradores with salary and price
+  let colabQuery=sb.from('colaboradores').select('id,nome,salario_base,preco_hh').eq('ativo',true).order('nome');
+  if(colabId)colabQuery=sb.from('colaboradores').select('id,nome,salario_base,preco_hh').eq('id',colabId);
+  const{data:colabs}=await colabQuery;
+
+  // Get ponto records
+  let pontoQuery=sb.from('ponto').select('colaborador_id,total_horas').gte('data',inicio||'2000-01-01').lte('data',fim||'2099-12-31');
+  if(colabId)pontoQuery=pontoQuery.eq('colaborador_id',colabId);
+  const{data:pontos}=await pontoQuery;
+
+  let totalBruto=0,totalSalario=0,totalAjuda=0;
+  let rows='';
+
+  (colabs||[]).forEach(c=>{
+    const meusPontos=(pontos||[]).filter(p=>p.colaborador_id===c.id);
+    const horas=meusPontos.reduce((a,p)=>a+(parseFloat(p.total_horas)||0),0);
+    const precoHH=parseFloat(c.preco_hh)||0;
+    const salario=parseFloat(c.salario_base)||0;
+    const bruto=horas*precoHH;
+    const ajuda=bruto-salario;
+    totalBruto+=bruto;totalSalario+=salario;totalAjuda+=ajuda;
+    const ajudaColor=ajuda>=0?'#EAF3DE,#3B6D11':'#FCEBEB,#E24B4A';
+    const[ajBg,ajFc]=ajudaColor.split(',');
+    rows+=`<tr>
+      <td style="padding:10px 14px;font-weight:500">${c.nome}</td>
+      <td style="padding:10px 14px;text-align:center">${horas.toFixed(1)}h</td>
+      <td style="padding:10px 14px;text-align:center">${precoHH.toFixed(2)} €</td>
+      <td style="padding:10px 14px;text-align:center;font-weight:500">${bruto.toFixed(2)} €</td>
+      <td style="padding:10px 14px;text-align:center;color:#E24B4A">${salario.toFixed(2)} €</td>
+      <td style="padding:10px 14px;text-align:center"><span style="background:${ajBg};color:${ajFc};padding:4px 12px;border-radius:20px;font-weight:600">${ajuda.toFixed(2)} €</span></td>
+    </tr>`;
+  });
+
+  // Totals row
+  rows+=`<tr style="border-top:2px solid var(--border);background:var(--blu)">
+    <td style="padding:10px 14px;font-weight:700">Total</td>
+    <td style="padding:10px 14px;text-align:center;font-weight:600">—</td>
+    <td style="padding:10px 14px;text-align:center">—</td>
+    <td style="padding:10px 14px;text-align:center;font-weight:700">${totalBruto.toFixed(2)} €</td>
+    <td style="padding:10px 14px;text-align:center;font-weight:700;color:#E24B4A">${totalSalario.toFixed(2)} €</td>
+    <td style="padding:10px 14px;text-align:center"><span style="background:#EAF3DE;color:#3B6D11;padding:4px 12px;border-radius:20px;font-weight:700">${totalAjuda.toFixed(2)} €</span></td>
+  </tr>`;
+
+  document.getElementById('finStats').innerHTML=`
+    <div style="background:#EAF3DE;border-radius:12px;padding:1rem">
+      <div style="font-size:12px;color:#3B6D11">Total valor bruto</div>
+      <div style="font-size:22px;font-weight:600;color:#3B6D11">${totalBruto.toFixed(2)} €</div>
+    </div>
+    <div style="background:#FCEBEB;border-radius:12px;padding:1rem">
+      <div style="font-size:12px;color:#A32D2D">Total salários</div>
+      <div style="font-size:22px;font-weight:600;color:#E24B4A">${totalSalario.toFixed(2)} €</div>
+    </div>
+    <div style="background:#E6F1FB;border-radius:12px;padding:1rem">
+      <div style="font-size:12px;color:#185FA5">Total ajuda de custo</div>
+      <div style="font-size:22px;font-weight:600;color:#185FA5">${totalAjuda.toFixed(2)} €</div>
+    </div>`;
+
+  document.getElementById('finTabela').innerHTML=`
+    <div style="background:#fff;border:0.5px solid var(--border);border-radius:12px;overflow:hidden">
+      <table><thead><tr>
+        <th>Colaborador</th><th>Horas</th><th>Preço H.H</th>
+        <th>Valor bruto<br><span style="font-weight:400;font-size:11px">(H × H.H)</span></th>
+        <th>Salário base</th>
+        <th>Ajuda de custo<br><span style="font-weight:400;font-size:11px">(Bruto - Salário)</span></th>
+      </tr></thead><tbody>${rows}</tbody></table>
+    </div>
+    <div style="background:var(--blu);border-radius:10px;padding:12px;margin-top:1rem;font-size:12px;color:var(--text2)">
+      <i class="ti ti-info-circle"></i> Fórmula: <strong>Horas × Preço H.H = Valor bruto</strong> · <strong>Valor bruto - Salário base = Ajuda de custo</strong>
+    </div>`;
+}
+
+async function exportarFinanceiroPDF(){
+  const inicio=document.getElementById('finDataInicio')?.value||'';
+  const fim=document.getElementById('finDataFim')?.value||'';
+  const colabId=document.getElementById('finColab')?.value||'';
+  let colabQuery=sb.from('colaboradores').select('id,nome,salario_base,preco_hh').eq('ativo',true).order('nome');
+  if(colabId)colabQuery=sb.from('colaboradores').select('id,nome,salario_base,preco_hh').eq('id',colabId);
+  const{data:colabs}=await colabQuery;
+  let pontoQuery=sb.from('ponto').select('colaborador_id,total_horas').gte('data',inicio||'2000-01-01').lte('data',fim||'2099-12-31');
+  if(colabId)pontoQuery=pontoQuery.eq('colaborador_id',colabId);
+  const{data:pontos}=await pontoQuery;
+  const rows=(colabs||[]).map(c=>{
+    const horas=(pontos||[]).filter(p=>p.colaborador_id===c.id).reduce((a,p)=>a+(parseFloat(p.total_horas)||0),0);
+    const bruto=horas*(parseFloat(c.preco_hh)||0);
+    const ajuda=bruto-(parseFloat(c.salario_base)||0);
+    return[c.nome,horas.toFixed(1)+'h',(parseFloat(c.preco_hh)||0).toFixed(2)+' €',bruto.toFixed(2)+' €',(parseFloat(c.salario_base)||0).toFixed(2)+' €',ajuda.toFixed(2)+' €'];
+  });
+  exportarRelatorioPDF('Resumo financeiro — '+(inicio||'')+(fim?' até '+fim:''),['Colaborador','Horas','Preço H.H','Valor bruto','Salário base','Ajuda de custo'],rows);
+}
+
+async function exportarFinanceiroExcel(){
+  const inicio=document.getElementById('finDataInicio')?.value||'';
+  const fim=document.getElementById('finDataFim')?.value||'';
+  const colabId=document.getElementById('finColab')?.value||'';
+  let colabQuery=sb.from('colaboradores').select('id,nome,salario_base,preco_hh').eq('ativo',true).order('nome');
+  if(colabId)colabQuery=sb.from('colaboradores').select('id,nome,salario_base,preco_hh').eq('id',colabId);
+  const{data:colabs}=await colabQuery;
+  let pontoQuery=sb.from('ponto').select('colaborador_id,total_horas').gte('data',inicio||'2000-01-01').lte('data',fim||'2099-12-31');
+  if(colabId)pontoQuery=pontoQuery.eq('colaborador_id',colabId);
+  const{data:pontos}=await pontoQuery;
+  const rows=(colabs||[]).map(c=>{
+    const horas=(pontos||[]).filter(p=>p.colaborador_id===c.id).reduce((a,p)=>a+(parseFloat(p.total_horas)||0),0);
+    const bruto=horas*(parseFloat(c.preco_hh)||0);
+    const ajuda=bruto-(parseFloat(c.salario_base)||0);
+    return{'Colaborador':c.nome,'Horas':horas.toFixed(1),'Preço H.H':parseFloat(c.preco_hh)||0,'Valor bruto':bruto.toFixed(2),'Salário base':parseFloat(c.salario_base)||0,'Ajuda de custo':ajuda.toFixed(2)};
+  });
+  exportarRelatorioExcel(rows,'Financeiro_'+(inicio||'')+(fim?'_'+fim:''));
 }
 
