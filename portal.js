@@ -87,7 +87,7 @@ function startClock(){
 }
 
 function showP(page){
-  ['dash','dashadm','ponto','recibos','docs','ficha','acolab','apontos','arecibos','adocs','assinaturas','relatorio','epis','alertas','meusepis','meusdocs','ausencias'].forEach(p=>{
+  ['dash','dashadm','ponto','recibos','docs','ficha','acolab','apontos','arecibos','adocs','assinaturas','relatorio','epis','alertas','meusepis','meusdocs','ausencias','historico','aniversarios','financeiro'].forEach(p=>{
     const el=document.getElementById('p-'+p);if(el)el.classList.add('hidden');
     const n=document.getElementById('n-'+p);if(n)n.classList.remove('active');
   });
