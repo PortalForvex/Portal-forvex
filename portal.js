@@ -581,7 +581,14 @@ async function guardarEditAdm(id){
     return;
   }
   // Register in historico
-  const campos=Object.keys(payload).filter(k=>payload[k]!==null&&payload[k]!=='');
+  const campoLabels={
+    cargo:'Cargo',departamento:'Departamento',data_admissao:'Data admissão',
+    tipo_contrato:'Tipo contrato',salario_base:'Salário base',preco_hh:'Preço H.H',
+    horario:'Horário',num_colaborador:'N.º colaborador',notas_adm:'Notas internas'
+  };
+  const campos=Object.keys(payload)
+    .filter(k=>payload[k]!==null&&payload[k]!=='')
+    .map(k=>campoLabels[k]||k);
   await registarHistorico(id,'profissional','Dados profissionais editados',campos);
   document.getElementById('modalEditAdm').remove();
   verColab(id);
