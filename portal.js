@@ -2113,12 +2113,10 @@ function exportarRelatorioPDF(titulo, headers, rows){
 }
 
 async function exportarRelatorioHorasPDF(){
-  const mes=document.getElementById('relMes')?.value||'';
+  const inicio=document.getElementById('relDataInicio')?.value||'';
+  const fim=document.getElementById('relDataFim')?.value||'';
   const colabId=document.getElementById('relColab')?.value||'';
-  if(!mes){toast('Selecione um mês','erro');return;}
-  const[ano,m]=mes.split('-');
-  const inicio=mes+'-01';
-  const fim=new Date(parseInt(ano),parseInt(m),0).toISOString().split('T')[0];
+  if(!inicio&&!fim){toast('Selecione um período','erro');return;}
   let query=sb.from('ponto').select('*,colaboradores(nome)').order('data',{ascending:false}).limit(500);
   if(inicio)query=query.gte('data',inicio);
   if(fim)query=query.lte('data',fim);
@@ -2132,35 +2130,37 @@ async function exportarRelatorioHorasPDF(){
     map[nome].dias++;
     map[nome].horas+=(parseFloat(r.total_horas)||0);
   });
-  const mesLabel=new Date(parseInt(ano),parseInt(m)-1,1).toLocaleDateString('pt-PT',{month:'long',year:'numeric'});
+  const periodoLabel=(inicio||'')+(fim?' até '+fim:'');
   const rows=Object.values(map).map(v=>[v.nome,v.dias,v.horas.toFixed(1)+'h',(v.horas/v.dias).toFixed(1)+'h']);
-  exportarRelatorioPDF('Relatório de horas — '+mesLabel,['Colaborador','Dias','Total horas','Média/dia'],rows);
+  exportarRelatorioPDF('Relatório de horas — '+periodoLabel,['Colaborador','Dias','Total horas','Média/dia'],rows);
 }
 
 async function exportarRelatorioHorasExcel(){
-  const mes=document.getElementById('relMes')?.value||'';
+  const inicio=document.getElementById('relDataInicio')?.value||'';
+  const fim=document.getElementById('relDataFim')?.value||'';
   const colabId=document.getElementById('relColab')?.value||'';
-  if(!mes){toast('Selecione um mês','erro');return;}
-  const[ano,m]=mes.split('-');
-  const inicio=mes+'-01';
-  const fim=new Date(parseInt(ano),parseInt(m),0).toISOString().split('T')[0];
+  if(!inicio&&!fim){toast('Selecione um período','erro');return;}
   let query=sb.from('ponto').select('*,colaboradores(nome)').gte('data',inicio).lte('data',fim).order('data',{ascending:true});
   if(colabId)query=query.eq('colaborador_id',colabId);
   const{data}=await query;
   if(!data||!data.length){toast('Sem dados','erro');return;}
   const rows=data.map(r=>({'Colaborador':r.colaboradores?.nome||'—','Data':r.data,'Entrada':r.entrada||'','Início pausa':r.inicio_pausa||'','Fim pausa':r.fim_pausa||'','Saída':r.saida||'','Total horas':r.total_horas||''}));
-  const mesLabel=new Date(parseInt(ano),parseInt(m)-1,1).toLocaleDateString('pt-PT',{month:'long',year:'numeric'});
-  exportarRelatorioExcel(rows,'Relatorio_Horas_'+mesLabel.replace(' ','_'));
+  const periodoLabel2=(inicio||'')+(fim?'_'+fim:'');
+  exportarRelatorioExcel(rows,'Relatorio_Horas_'+periodoLabel2);
 }
 
 async function exportarAusenciasPDF(){
-  const mes=document.getElementById('ausMes')?.value||'';
-  if(!mes){toast('Selecione um mês','erro');return;}
-  const[ano,m]=mes.split('-');
+  const inicio=document.getElementById('ausDataInicio')?.value||'';
+  const fim=document.getElementById('ausDataFim')?.value||'';
+  if(!inicio&&!fim){toast('Selecione um período','erro');return;}
   const hoje=new Date().toISOString().split('T')[0];
-  const inicio=mes+'-01';
-  const fim=new Date(parseInt(ano),parseInt(m),0).toISOString().split('T')[0];
-  const diasUteis=getDiasUteis(parseInt(ano),parseInt(m)).filter(d=>d<=hoje);
+  const diasUteis=[];
+  const startD=new Date(inicio||hoje);
+  const endD=new Date(fim||hoje);
+  for(let d=new Date(startD);d<=endD;d.setDate(d.getDate()+1)){
+    const dow=d.getDay();
+    if(dow!==0&&dow!==6){const str=d.toISOString().split('T')[0];if(str<=hoje)diasUteis.push(str);}
+  }
   const{data:colabs}=await sb.from('colaboradores').select('id,nome').eq('ativo',true).order('nome');
   const{data:pontos}=await sb.from('ponto').select('colaborador_id,data,entrada,saida').gte('data',inicio).lte('data',fim);
   const rows=(colabs||[]).map(c=>{
@@ -2178,17 +2178,21 @@ async function exportarAusenciasPDF(){
     return [c.nome,diasUteis.length,presencas,faltas,incomp,pct+'%'];
   });
   const mesLabel=new Date(parseInt(ano),parseInt(m)-1,1).toLocaleDateString('pt-PT',{month:'long',year:'numeric'});
-  exportarRelatorioPDF('Relatório de ausências — '+mesLabel,['Colaborador','Dias úteis','Presenças','Faltas','Incompletos','% Presença'],rows);
+  exportarRelatorioPDF('Relatório de ausências — '+(inicio||'')+(fim?' até '+fim:''),['Colaborador','Dias úteis','Presenças','Faltas','Incompletos','% Presença'],rows);
 }
 
 async function exportarAusenciasExcel(){
-  const mes=document.getElementById('ausMes')?.value||'';
-  if(!mes){toast('Selecione um mês','erro');return;}
-  const[ano,m]=mes.split('-');
+  const inicio=document.getElementById('ausDataInicio')?.value||'';
+  const fim=document.getElementById('ausDataFim')?.value||'';
+  if(!inicio&&!fim){toast('Selecione um período','erro');return;}
   const hoje=new Date().toISOString().split('T')[0];
-  const inicio=mes+'-01';
-  const fim=new Date(parseInt(ano),parseInt(m),0).toISOString().split('T')[0];
-  const diasUteis=getDiasUteis(parseInt(ano),parseInt(m)).filter(d=>d<=hoje);
+  const diasUteis=[];
+  const startD2=new Date(inicio||hoje);
+  const endD2=new Date(fim||hoje);
+  for(let d=new Date(startD2);d<=endD2;d.setDate(d.getDate()+1)){
+    const dow=d.getDay();
+    if(dow!==0&&dow!==6){const str=d.toISOString().split('T')[0];if(str<=hoje)diasUteis.push(str);}
+  }
   const{data:colabs}=await sb.from('colaboradores').select('id,nome').eq('ativo',true).order('nome');
   const{data:pontos}=await sb.from('ponto').select('colaborador_id,data,entrada,saida').gte('data',inicio).lte('data',fim);
   const rows=(colabs||[]).map(c=>{
@@ -2203,7 +2207,7 @@ async function exportarAusenciasExcel(){
     return{'Colaborador':c.nome,'Dias úteis':diasUteis.length,'Presenças':presencas,'Faltas':faltas,'Incompletos':incomp,'% Presença':pct+'%'};
   });
   const mesLabel=new Date(parseInt(ano),parseInt(m)-1,1).toLocaleDateString('pt-PT',{month:'long',year:'numeric'});
-  exportarRelatorioExcel(rows,'Ausencias_'+mesLabel.replace(' ','_'));
+  exportarRelatorioExcel(rows,'Ausencias_'+(inicio||'')+(fim?'_'+fim:''));
 }
 
 async function exportarPontosPDF(){
