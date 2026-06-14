@@ -202,6 +202,8 @@ canvas{border:1px solid var(--border);border-radius:8px;cursor:crosshair;display
         <div class="ni" id="n-epis" onclick="showP('epis')"><i class="ti ti-shield-check"></i> <span class="ni-text">Gestão EPIs</span></div>
         <div class="ni" id="n-alertas" onclick="showP('alertas')"><i class="ti ti-bell"></i> <span class="ni-text">Alertas docs</span></div>
         <div class="ni" id="n-historico" onclick="showP('historico')"><i class="ti ti-history"></i> <span class="ni-text">Histórico</span></div>
+        <div class="ni" id="n-aniversarios" onclick="showP('aniversarios')"><i class="ti ti-cake"></i> <span class="ni-text">Aniversários</span></div>
+        <div class="ni" id="n-financeiro" onclick="showP('financeiro')"><i class="ti ti-calculator"></i> <span class="ni-text">Financeiro</span></div>
       </div>
     </div>
 
@@ -435,6 +437,27 @@ canvas{border:1px solid var(--border);border-radius:8px;cursor:crosshair;display
         <button class="bs bb" onclick="publicarDoc()">Publicar documento</button>
         <div id="aDMsg" style="margin-top:8px;font-size:13px"></div>
       </div>
+    </div>
+
+    <div id="p-aniversarios" class="hidden">
+      <div class="pt">Aniversários</div>
+      <div id="aniversariosContent"></div>
+    </div>
+
+    <div id="p-financeiro" class="hidden">
+      <div class="pt">Resumo financeiro</div>
+      <div style="display:flex;gap:8px;margin-bottom:1rem;flex-wrap:wrap;align-items:center">
+        <input type="date" id="finDataInicio" onchange="loadFinanceiro()" style="font-size:13px;padding:6px 10px;border-radius:8px;border:1px solid #d4d2ca" />
+        <span style="font-size:13px;color:var(--text2)">até</span>
+        <input type="date" id="finDataFim" onchange="loadFinanceiro()" style="font-size:13px;padding:6px 10px;border-radius:8px;border:1px solid #d4d2ca" />
+        <select id="finColab" onchange="loadFinanceiro()" style="font-size:13px;padding:6px 10px;border-radius:8px;border:1px solid #d4d2ca">
+          <option value="">Todos os colaboradores</option>
+        </select>
+        <button onclick="exportarFinanceiroPDF()" style="font-size:13px;padding:6px 12px;border-radius:8px;border:0.5px solid #F09595;background:#FCEBEB;color:#A32D2D;cursor:pointer;display:flex;align-items:center;gap:4px"><i class="ti ti-file-type-pdf"></i> PDF</button>
+        <button onclick="exportarFinanceiroExcel()" style="font-size:13px;padding:6px 12px;border-radius:8px;border:0.5px solid #C0DD97;background:#EAF3DE;color:#3B6D11;cursor:pointer;display:flex;align-items:center;gap:4px"><i class="ti ti-file-type-xls"></i> Excel</button>
+      </div>
+      <div id="finStats" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:1rem"></div>
+      <div id="finTabela"></div>
     </div>
 
     <div id="p-historico" class="hidden">
