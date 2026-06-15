@@ -1335,16 +1335,12 @@ document.querySelectorAll('.mo').forEach(m=>m.addEventListener('click',e=>{if(e.
 // RELATÓRIO MENSAL DE HORAS
 // ─────────────────────────────────────────────────────
 async function initRelatorio(){
-  const sel=document.getElementById('relPeriodo');
-  if(sel&&sel.options.length<=1){
-    getUltimosPeriodos().forEach((p,i)=>{
-      const o=document.createElement('option');
-      o.value=p.inicio+'|'+p.fim;
-      o.textContent=p.label;
-      if(i===0)o.selected=true;
-      sel.appendChild(o);
-    });
-  }
+  // Set default to current period (21 prev → 20 current)
+  const periodo=getPeriodoAtual();
+  const iniEl=document.getElementById('relDataInicio');
+  const fimEl=document.getElementById('relDataFim');
+  if(iniEl&&!iniEl.value)iniEl.value=periodo.inicio;
+  if(fimEl&&!fimEl.value)fimEl.value=periodo.fim;
   const selC=document.getElementById('relColab');
   const{data:colabs}=await sb.from('colaboradores').select('id,nome').eq('ativo',true).order('nome');
   if(colabs)colabs.forEach(c=>{
@@ -1354,10 +1350,10 @@ async function initRelatorio(){
 }
 
 async function loadRelatorio(){
-  const periodoVal=document.getElementById('relPeriodo')?.value||'';
-  if(!periodoVal)return;
-  const[inicio,fim]=periodoVal.split('|');
+  const inicio=document.getElementById('relDataInicio')?.value||'';
+  const fim=document.getElementById('relDataFim')?.value||'';
   const colabId=document.getElementById('relColab')?.value||'';
+  if(!inicio&&!fim)return;
   let query=sb.from('ponto').select('*,colaboradores(nome)').order('data',{ascending:false}).limit(500);
   if(inicio)query=query.gte('data',inicio);
   if(fim)query=query.lte('data',fim);
@@ -1377,8 +1373,17 @@ async function loadRelatorio(){
   });
 
   const vals=Object.values(map);
+
+  // Calculate totals with extras
+  let tNormais=0,tE25=0,tE375=0,tE50=0,tE100=0,tFalta=0;
+  data.forEach(r=>{
+    const h=parseFloat(r.total_horas)||0;
+    const tipo=getTipoDia(r.data);
+    const calc=calcHorasExtras(h,tipo);
+    tNormais+=calc.normais;tE25+=calc.extra25;tE375+=calc.extra375;
+    tE50+=calc.extra50;tE100+=calc.extra100;tFalta+=calc.falta;
+  });
   const totalH=vals.reduce((a,b)=>a+b.horas,0);
-  const totalD=vals.reduce((a,b)=>a+b.dias,0);
 
   document.getElementById('relStats').innerHTML=`
     <div style="background:var(--blu);border-radius:8px;padding:1rem">
@@ -1386,22 +1391,37 @@ async function loadRelatorio(){
       <div style="font-size:22px;font-weight:600;color:var(--blue)">${totalH.toFixed(1)}h</div>
     </div>
     <div style="background:var(--blu);border-radius:8px;padding:1rem">
-      <div style="font-size:12px;color:var(--text2)">Registos</div>
-      <div style="font-size:22px;font-weight:600;color:var(--blue)">${totalD}</div>
+      <div style="font-size:12px;color:var(--text2)">H. Normais</div>
+      <div style="font-size:22px;font-weight:600;color:var(--blue)">${tNormais.toFixed(1)}h</div>
+    </div>
+    <div style="background:#EAF3DE;border-radius:8px;padding:1rem">
+      <div style="font-size:12px;color:#3B6D11">Extra 25%</div>
+      <div style="font-size:22px;font-weight:600;color:#3B6D11">${tE25.toFixed(1)}h</div>
+    </div>
+    <div style="background:#EAF3DE;border-radius:8px;padding:1rem">
+      <div style="font-size:12px;color:#3B6D11">Extra 37,5%</div>
+      <div style="font-size:22px;font-weight:600;color:#3B6D11">${tE375.toFixed(1)}h</div>
+    </div>
+    <div style="background:#FAEEDA;border-radius:8px;padding:1rem">
+      <div style="font-size:12px;color:#854F0B">Sáb 50%</div>
+      <div style="font-size:22px;font-weight:600;color:#BA7517">${tE50.toFixed(1)}h</div>
+    </div>
+    <div style="background:#FAEEDA;border-radius:8px;padding:1rem">
+      <div style="font-size:12px;color:#854F0B">Dom/Fer 100%</div>
+      <div style="font-size:22px;font-weight:600;color:#BA7517">${tE100.toFixed(1)}h</div>
+    </div>
+    <div style="background:#FCEBEB;border-radius:8px;padding:1rem">
+      <div style="font-size:12px;color:#A32D2D">Em falta</div>
+      <div style="font-size:22px;font-weight:600;color:#E24B4A">${tFalta.toFixed(1)}h</div>
     </div>
     <div style="background:var(--blu);border-radius:8px;padding:1rem">
       <div style="font-size:12px;color:var(--text2)">Colaboradores</div>
       <div style="font-size:22px;font-weight:600;color:var(--blue)">${vals.length}</div>
     </div>`;
 
-  // Also fetch ponto details for extras calculation
-  let query2=sb.from('ponto').select('colaborador_id,data,total_horas').gte('data',inicio).lte('data',fim);
-  if(colabId)query2=query2.eq('colaborador_id',colabId);
-  const{data:pontoDetalhes}=await query2;
-
   let rows='';
   vals.forEach(v=>{
-    const meusPontos=(pontoDetalhes||[]).filter(p=>p.colaborador_id===v.cid);
+    const meusPontos=(data||[]).filter(p=>p.colaborador_id===v.cid);
     let normais=0,e25=0,e375=0,e50=0,e100=0,falta=0;
     meusPontos.forEach(p=>{
       const h=parseFloat(p.total_horas)||0;
@@ -2232,16 +2252,11 @@ async function loadAdmNotifPanel(){
 // RELATÓRIO DE AUSÊNCIAS
 // ─────────────────────────────────────────────────────
 async function initAusencias(){
-  const sel=document.getElementById('ausPeriodo');
-  if(sel&&sel.options.length<=1){
-    getUltimosPeriodos().forEach((p,i)=>{
-      const o=document.createElement('option');
-      o.value=p.inicio+'|'+p.fim;
-      o.textContent=p.label;
-      if(i===0)o.selected=true;
-      sel.appendChild(o);
-    });
-  }
+  const periodo=getPeriodoAtual();
+  const iniEl=document.getElementById('ausDataInicio');
+  const fimEl=document.getElementById('ausDataFim');
+  if(iniEl&&!iniEl.value)iniEl.value=periodo.inicio;
+  if(fimEl&&!fimEl.value)fimEl.value=periodo.fim;
   const selC=document.getElementById('ausColab');
   if(selC && selC.options.length<=1){
     const{data:colabs}=await sb.from('colaboradores').select('id,nome').eq('ativo',true).order('nome');
@@ -2264,10 +2279,10 @@ function getDiasUteis(ano,mes){
 }
 
 async function loadAusencias(){
-  const periodoVal=document.getElementById('ausPeriodo')?.value||'';
-  if(!periodoVal)return;
-  const[inicio,fim]=periodoVal.split('|');
+  const inicio=document.getElementById('ausDataInicio')?.value||'';
+  const fim=document.getElementById('ausDataFim')?.value||'';
   const colabId=document.getElementById('ausColab')?.value||'';
+  if(!inicio&&!fim)return;
   const today=new Date().toISOString().split('T')[0];
 
   let query=sb.from('colaboradores').select('id,nome').eq('ativo',true).order('nome');
@@ -2621,25 +2636,91 @@ async function exportarAusenciasExcel(){
 }
 
 async function exportarPontosPDF(){
-  const{data}=await sb.from('ponto').select('*,colaboradores(nome)').order('data',{ascending:false}).limit(200);
+  const colabId=document.getElementById('pontosFilterColab')?.value||'';
+  const dataInicio=document.getElementById('pontosDataInicio')?.value||'';
+  const dataFim=document.getElementById('pontosDataFim')?.value||'';
+  let query=sb.from('ponto').select('*,colaboradores(nome)').order('data',{ascending:false}).limit(500);
+  if(colabId)query=query.eq('colaborador_id',colabId);
+  if(dataInicio)query=query.gte('data',dataInicio);
+  if(dataFim)query=query.lte('data',dataFim);
+  const{data}=await query;
   if(!data||!data.length){toast('Sem dados','erro');return;}
-  const rows=data.map(r=>[
-    r.colaboradores?.nome||'—',
-    r.data,
-    r.entrada||'—',
-    r.inicio_pausa||'—',
-    r.fim_pausa||'—',
-    r.saida||'—',
-    r.total_horas||'—'
-  ]);
-  exportarRelatorioPDF('Relatório de ponto',['Colaborador','Data','Entrada','Início pausa','Fim pausa','Saída','Total horas'],rows);
+
+  const diasPT=['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+  const rows=data.map(r=>{
+    const h=parseFloat(r.total_horas)||0;
+    const tipo=getTipoDia(r.data);
+    const diaSem=getDiaSemana(r.data);
+    const calc=calcHorasExtras(h,tipo);
+    const dataFmt=r.data?r.data.split('-').reverse().join('/'):'—';
+    const pausa=r.inicio_pausa&&r.fim_pausa?r.inicio_pausa+'–'+r.fim_pausa:'—';
+
+    let tipoStr='Normal';
+    if(tipo==='sabado') tipoStr='Sábado (50%)';
+    else if(tipo==='domingo') tipoStr='Domingo (100%)';
+    else if(tipo==='feriado') tipoStr='Feriado (100%)';
+    else if(calc.falta>0) tipoStr='-'+calc.falta.toFixed(1)+'h em falta';
+    else{
+      let parts=[];
+      if(calc.extra25>0) parts.push('+'+calc.extra25.toFixed(1)+'h 25%');
+      if(calc.extra375>0) parts.push('+'+calc.extra375.toFixed(1)+'h 37,5%');
+      if(parts.length) tipoStr=parts.join(' | ');
+    }
+
+    return[
+      dataFmt,
+      diaSem,
+      r.entrada||'—',
+      pausa,
+      r.saida||'—',
+      h>0?h.toFixed(1)+'h':'—',
+      tipoStr
+    ];
+  });
+
+  // Get colaborador name for title
+  const nomeColab=data[0]?.colaboradores?.nome||'Todos os colaboradores';
+  const periodo=(dataInicio||'')+(dataFim?' até '+dataFim:'');
+  exportarRelatorioPDF(
+    'Folha de ponto — '+nomeColab+(periodo?' | '+periodo:''),
+    ['Data','Dia','Entrada','Pausa','Saída','Total','Tipo/Extra'],
+    rows
+  );
 }
 
 async function exportarPontosExcel(){
-  const{data}=await sb.from('ponto').select('*,colaboradores(nome)').order('data',{ascending:false}).limit(500);
+  const colabId=document.getElementById('pontosFilterColab')?.value||'';
+  const dataInicio=document.getElementById('pontosDataInicio')?.value||'';
+  const dataFim=document.getElementById('pontosDataFim')?.value||'';
+  let query=sb.from('ponto').select('*,colaboradores(nome)').order('data',{ascending:false}).limit(500);
+  if(colabId)query=query.eq('colaborador_id',colabId);
+  if(dataInicio)query=query.gte('data',dataInicio);
+  if(dataFim)query=query.lte('data',dataFim);
+  const{data}=await query;
   if(!data||!data.length){toast('Sem dados','erro');return;}
-  const rows=data.map(r=>({'Colaborador':r.colaboradores?.nome||'—','Data':r.data,'Entrada':r.entrada||'','Início pausa':r.inicio_pausa||'','Fim pausa':r.fim_pausa||'','Saída':r.saida||'','Total horas':r.total_horas||''}));
-  exportarRelatorioExcel(rows,'Relatorio_Ponto');
+  const rows=data.map(r=>{
+    const h=parseFloat(r.total_horas)||0;
+    const tipo=getTipoDia(r.data);
+    const calc=calcHorasExtras(h,tipo);
+    const pausa=r.inicio_pausa&&r.fim_pausa?r.inicio_pausa+'–'+r.fim_pausa:'—';
+    return{
+      'Colaborador':r.colaboradores?.nome||'—',
+      'Data':r.data?r.data.split('-').reverse().join('/'):'—',
+      'Dia':getDiaSemana(r.data),
+      'Entrada':r.entrada||'—',
+      'Pausa':pausa,
+      'Saída':r.saida||'—',
+      'Total horas':h>0?h.toFixed(1):'—',
+      'H. Normais':calc.normais>0?calc.normais.toFixed(1):'—',
+      'Extra 25%':calc.extra25>0?calc.extra25.toFixed(1):'—',
+      'Extra 37,5%':calc.extra375>0?calc.extra375.toFixed(1):'—',
+      'Sáb 50%':calc.extra50>0?calc.extra50.toFixed(1):'—',
+      'Dom/Fer 100%':calc.extra100>0?calc.extra100.toFixed(1):'—',
+      'Em falta':calc.falta>0?calc.falta.toFixed(1):'—',
+      'Tipo':tipo==='sabado'?'Sábado':tipo==='domingo'?'Domingo':tipo==='feriado'?'Feriado':'Normal'
+    };
+  });
+  exportarRelatorioExcel(rows,'Relatorio_Ponto_'+(dataInicio||'')+(dataFim?'_'+dataFim:''));
 }
 
 // ─────────────────────────────────────────────────────
@@ -2884,17 +2965,37 @@ async function loadFinanceiro(){
 
   (colabs||[]).forEach(c=>{
     const meusPontos=(pontos||[]).filter(p=>p.colaborador_id===c.id);
-    const horas=meusPontos.reduce((a,p)=>a+(parseFloat(p.total_horas)||0),0);
+    // Calculate hours with extras
+    let normais=0,e25=0,e375=0,e50=0,e100=0;
+    meusPontos.forEach(p=>{
+      const h=parseFloat(p.total_horas)||0;
+      const tipo=getTipoDia(p.data);
+      const calc=calcHorasExtras(h,tipo);
+      normais+=calc.normais;e25+=calc.extra25;e375+=calc.extra375;
+      e50+=calc.extra50;e100+=calc.extra100;
+    });
+    const horas=normais+e25+e375+e50+e100;
+    // Extra value: extras are paid at percentage above normal
     const precoHH=parseFloat(c.preco_hh)||0;
     const salario=parseFloat(c.salario_base)||0;
-    const bruto=horas*precoHH;
+    // Normal hours value + extra percentages
+    const valorNormais=normais*precoHH;
+    const valorE25=e25*precoHH*1.25;
+    const valorE375=e375*precoHH*1.375;
+    const valorE50=e50*precoHH*1.50;
+    const valorE100=e100*precoHH*2.00;
+    const bruto=valorNormais+valorE25+valorE375+valorE50+valorE100;
     const ajuda=bruto-salario;
     totalBruto+=bruto;totalSalario+=salario;totalAjuda+=ajuda;
     const ajudaColor=ajuda>=0?'#EAF3DE,#3B6D11':'#FCEBEB,#E24B4A';
     const[ajBg,ajFc]=ajudaColor.split(',');
     rows+=`<tr>
       <td style="padding:10px 14px;font-weight:500">${c.nome}</td>
-      <td style="padding:10px 14px;text-align:center">${horas.toFixed(1)}h</td>
+      <td style="padding:10px 14px;text-align:center">${normais.toFixed(1)}h</td>
+      <td style="padding:10px 14px;text-align:center;color:#3B6D11">${e25>0?e25.toFixed(1)+'h':'—'}</td>
+      <td style="padding:10px 14px;text-align:center;color:#3B6D11">${e375>0?e375.toFixed(1)+'h':'—'}</td>
+      <td style="padding:10px 14px;text-align:center;color:#BA7517">${e50>0?e50.toFixed(1)+'h':'—'}</td>
+      <td style="padding:10px 14px;text-align:center;color:#A32D2D">${e100>0?e100.toFixed(1)+'h':'—'}</td>
       <td style="padding:10px 14px;text-align:center">${precoHH.toFixed(2)} €</td>
       <td style="padding:10px 14px;text-align:center;font-weight:500">${bruto.toFixed(2)} €</td>
       <td style="padding:10px 14px;text-align:center;color:#E24B4A">${salario.toFixed(2)} €</td>
@@ -2927,12 +3028,18 @@ async function loadFinanceiro(){
     </div>`;
 
   document.getElementById('finTabela').innerHTML=`
-    <div style="background:#fff;border:0.5px solid var(--border);border-radius:12px;overflow:hidden">
-      <table><thead><tr>
-        <th>Colaborador</th><th>Horas</th><th>Preço H.H</th>
-        <th>Valor bruto<br><span style="font-weight:400;font-size:11px">(H × H.H)</span></th>
+    <div style="background:#fff;border:0.5px solid var(--border);border-radius:12px;overflow:auto">
+      <table style="min-width:800px"><thead><tr>
+        <th>Colaborador</th>
+        <th>H. Normais</th>
+        <th style="color:#3B6D11">H.Extra 25%</th>
+        <th style="color:#3B6D11">H.Extra 37,5%</th>
+        <th style="color:#BA7517">H.Extra 50%</th>
+        <th style="color:#A32D2D">H.Extra 100%</th>
+        <th>Preço H.H</th>
+        <th>Valor bruto</th>
         <th>Salário base</th>
-        <th>Ajuda de custo<br><span style="font-weight:400;font-size:11px">(Bruto - Salário)</span></th>
+        <th>Ajuda de custo</th>
       </tr></thead><tbody>${rows}</tbody></table>
     </div>
     <div style="background:var(--blu);border-radius:10px;padding:12px;margin-top:1rem;font-size:12px;color:var(--text2)">
