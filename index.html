@@ -399,6 +399,10 @@ canvas{border:1px solid var(--border);border-radius:8px;cursor:crosshair;display
           <input type="date" id="pontosDataInicio" onchange="loadAPontos()" style="font-size:13px;padding:6px 10px;border-radius:8px;border:1px solid #d4d2ca" title="Data início" />
           <span style="font-size:13px;color:var(--text2)">até</span>
           <input type="date" id="pontosDataFim" onchange="loadAPontos()" style="font-size:13px;padding:6px 10px;border-radius:8px;border:1px solid #d4d2ca" title="Data fim" />
+          <select id="pontosOrdem" onchange="loadAPontos()" style="font-size:13px;padding:6px 10px;border-radius:8px;border:1px solid #d4d2ca">
+            <option value="desc">Mais recente primeiro</option>
+            <option value="asc">Mais antigo primeiro</option>
+          </select>
           <button onclick="exportarPontosPDF()" style="font-size:13px;padding:6px 12px;border-radius:8px;border:0.5px solid #F09595;background:#FCEBEB;color:#A32D2D;cursor:pointer;display:flex;align-items:center;gap:4px"><i class="ti ti-file-type-pdf"></i> PDF</button>
           <button onclick="exportarPontosExcel()" style="font-size:13px;padding:6px 12px;border-radius:8px;border:0.5px solid #C0DD97;background:#EAF3DE;color:#3B6D11;cursor:pointer;display:flex;align-items:center;gap:4px"><i class="ti ti-file-type-xls"></i> Excel</button>
         </div>
