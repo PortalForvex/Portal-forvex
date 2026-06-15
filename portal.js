@@ -766,7 +766,11 @@ async function loadAPontos(){
       <td style="padding:8px 10px;text-align:center;color:var(--text2);font-size:12px">${pausa}</td>
       <td style="padding:8px 10px;text-align:center">${r.saida||'—'}</td>
       <td style="padding:8px 10px;text-align:center">${totalBadge}</td>
-      <td style="padding:8px 10px">${tipoLabel}</td>
+      <td style="padding:8px 10px;text-align:center;color:#3B6D11;font-size:12px">${calc.extra25>0?calc.extra25.toFixed(1)+'h':'—'}</td>
+      <td style="padding:8px 10px;text-align:center;color:#3B6D11;font-size:12px">${calc.extra375>0?calc.extra375.toFixed(1)+'h':'—'}</td>
+      <td style="padding:8px 10px;text-align:center;color:#BA7517;font-size:12px">${calc.extra50>0?calc.extra50.toFixed(1)+'h':'—'}</td>
+      <td style="padding:8px 10px;text-align:center;color:#A32D2D;font-size:12px">${calc.extra100>0?calc.extra100.toFixed(1)+'h':'—'}</td>
+      <td style="padding:8px 10px;text-align:center;color:#E24B4A;font-size:12px">${calc.falta>0?calc.falta.toFixed(1)+'h':'—'}</td>
       <td style="padding:8px 10px;text-align:center">
         <button onclick="editarPontoIdx(${i})" style="background:none;border:none;cursor:pointer;color:#BA7517"><i class="ti ti-pencil" style="font-size:15px"></i></button>
       </td>
@@ -782,9 +786,12 @@ async function loadAPontos(){
         <button onclick="eliminarPontosSelecionados()" style="font-size:12px;padding:5px 12px;border-radius:6px;border:none;background:#E24B4A;color:#fff;cursor:pointer;display:flex;align-items:center;gap:4px"><i class="ti ti-trash"></i> Eliminar</button>
       </div>
     </div>
-    <table><thead><tr>
+    <table style="min-width:900px"><thead><tr>
       <th style="width:36px;text-align:center"><input type="checkbox" id="chkAllPontos" onclick="toggleAllPontos()" style="width:15px;height:15px;cursor:pointer" /></th>
-      <th>Colaborador</th><th>Data</th><th>Dia</th><th>Entrada</th><th>Pausa</th><th>Saída</th><th>Total</th><th>Tipo</th><th></th>
+      <th>Colaborador</th><th>Data</th><th>Dia</th><th>Entrada</th><th>Pausa</th><th>Saída</th><th>Total</th>
+      <th style="color:#3B6D11">Extra 25%</th><th style="color:#3B6D11">Extra 37,5%</th>
+      <th style="color:#BA7517">Sáb 50%</th><th style="color:#A32D2D">Dom/Fer 100%</th>
+      <th style="color:#E24B4A">Em falta</th><th></th>
     </tr></thead><tbody>${rows}</tbody></table>`;
 }
 
@@ -1366,7 +1373,7 @@ async function loadRelatorio(){
   data.forEach(r=>{
     const nome=r.colaboradores?.nome||'—';
     const cid=r.colaborador_id;
-    if(!map[cid])map[cid]={nome,dias:0,horas:0,faltas:0};
+    if(!map[cid])map[cid]={nome,cid,dias:0,horas:0};
     map[cid].dias++;
     const h=parseFloat(r.total_horas)||0;
     map[cid].horas+=h;
@@ -2952,13 +2959,18 @@ async function loadFinanceiro(){
 
   // Get colaboradores with salary and price
   let colabQuery=sb.from('colaboradores').select('id,nome,salario_base,preco_hh').eq('ativo',true).order('nome');
-  if(colabId)colabQuery=sb.from('colaboradores').select('id,nome,salario_base,preco_hh').eq('id',colabId);
+  if(colabId)colabQuery=sb.from('colaboradores').select('id,nome,salario_base,preco_hh').eq('ativo',true).eq('id',colabId);
   const{data:colabs}=await colabQuery;
 
   // Get ponto records
-  let pontoQuery=sb.from('ponto').select('colaborador_id,total_horas').gte('data',inicio||'2000-01-01').lte('data',fim||'2099-12-31');
+  let pontoQuery=sb.from('ponto').select('colaborador_id,data,total_horas').gte('data',inicio||'2000-01-01').lte('data',fim||'2099-12-31');
   if(colabId)pontoQuery=pontoQuery.eq('colaborador_id',colabId);
   const{data:pontos}=await pontoQuery;
+  if(!pontos||!pontos.length){
+    document.getElementById('finStats').innerHTML='<p style="color:var(--text2);font-size:13px;text-align:center;padding:1rem">Sem registos no período selecionado</p>';
+    document.getElementById('finTabela').innerHTML='';
+    return;
+  }
 
   let totalBruto=0,totalSalario=0,totalAjuda=0;
   let rows='';
@@ -3052,11 +3064,16 @@ async function exportarFinanceiroPDF(){
   const fim=document.getElementById('finDataFim')?.value||'';
   const colabId=document.getElementById('finColab')?.value||'';
   let colabQuery=sb.from('colaboradores').select('id,nome,salario_base,preco_hh').eq('ativo',true).order('nome');
-  if(colabId)colabQuery=sb.from('colaboradores').select('id,nome,salario_base,preco_hh').eq('id',colabId);
+  if(colabId)colabQuery=sb.from('colaboradores').select('id,nome,salario_base,preco_hh').eq('ativo',true).eq('id',colabId);
   const{data:colabs}=await colabQuery;
-  let pontoQuery=sb.from('ponto').select('colaborador_id,total_horas').gte('data',inicio||'2000-01-01').lte('data',fim||'2099-12-31');
+  let pontoQuery=sb.from('ponto').select('colaborador_id,data,total_horas').gte('data',inicio||'2000-01-01').lte('data',fim||'2099-12-31');
   if(colabId)pontoQuery=pontoQuery.eq('colaborador_id',colabId);
   const{data:pontos}=await pontoQuery;
+  if(!pontos||!pontos.length){
+    document.getElementById('finStats').innerHTML='<p style="color:var(--text2);font-size:13px;text-align:center;padding:1rem">Sem registos no período selecionado</p>';
+    document.getElementById('finTabela').innerHTML='';
+    return;
+  }
   const rows=(colabs||[]).map(c=>{
     const horas=(pontos||[]).filter(p=>p.colaborador_id===c.id).reduce((a,p)=>a+(parseFloat(p.total_horas)||0),0);
     const bruto=horas*(parseFloat(c.preco_hh)||0);
@@ -3071,11 +3088,16 @@ async function exportarFinanceiroExcel(){
   const fim=document.getElementById('finDataFim')?.value||'';
   const colabId=document.getElementById('finColab')?.value||'';
   let colabQuery=sb.from('colaboradores').select('id,nome,salario_base,preco_hh').eq('ativo',true).order('nome');
-  if(colabId)colabQuery=sb.from('colaboradores').select('id,nome,salario_base,preco_hh').eq('id',colabId);
+  if(colabId)colabQuery=sb.from('colaboradores').select('id,nome,salario_base,preco_hh').eq('ativo',true).eq('id',colabId);
   const{data:colabs}=await colabQuery;
-  let pontoQuery=sb.from('ponto').select('colaborador_id,total_horas').gte('data',inicio||'2000-01-01').lte('data',fim||'2099-12-31');
+  let pontoQuery=sb.from('ponto').select('colaborador_id,data,total_horas').gte('data',inicio||'2000-01-01').lte('data',fim||'2099-12-31');
   if(colabId)pontoQuery=pontoQuery.eq('colaborador_id',colabId);
   const{data:pontos}=await pontoQuery;
+  if(!pontos||!pontos.length){
+    document.getElementById('finStats').innerHTML='<p style="color:var(--text2);font-size:13px;text-align:center;padding:1rem">Sem registos no período selecionado</p>';
+    document.getElementById('finTabela').innerHTML='';
+    return;
+  }
   const rows=(colabs||[]).map(c=>{
     const horas=(pontos||[]).filter(p=>p.colaborador_id===c.id).reduce((a,p)=>a+(parseFloat(p.total_horas)||0),0);
     const bruto=horas*(parseFloat(c.preco_hh)||0);
