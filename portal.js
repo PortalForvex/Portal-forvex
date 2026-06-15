@@ -710,7 +710,8 @@ async function loadAPontos(){
     });
   }
 
-  let query=sb.from('ponto').select('*,colaboradores(nome)').order('data',{ascending:false}).limit(500);
+  const ordem=document.getElementById('pontosOrdem')?.value||'desc';
+  let query=sb.from('ponto').select('*,colaboradores(nome)').order('data',{ascending:ordem==='asc'}).limit(500);
   if(colabId)query=query.eq('colaborador_id',colabId);
   if(dataInicio)query=query.gte('data',dataInicio);
   if(dataFim)query=query.lte('data',dataFim);
@@ -2549,7 +2550,7 @@ async function exportarRelatorioHorasPDF(){
   const fim=document.getElementById('relDataFim')?.value||'';
   const colabId=document.getElementById('relColab')?.value||'';
   if(!inicio&&!fim){toast('Selecione um período','erro');return;}
-  let query=sb.from('ponto').select('*,colaboradores(nome)').order('data',{ascending:false}).limit(500);
+  let query=sb.from('ponto').select('colaborador_id,data,total_horas,colaboradores(nome)').order('data',{ascending:false}).limit(500);
   if(inicio)query=query.gte('data',inicio);
   if(fim)query=query.lte('data',fim);
   if(colabId)query=query.eq('colaborador_id',colabId);
@@ -2558,13 +2559,30 @@ async function exportarRelatorioHorasPDF(){
   const map={};
   data.forEach(r=>{
     const nome=r.colaboradores?.nome||'—';
-    if(!map[nome])map[nome]={nome,dias:0,horas:0};
-    map[nome].dias++;
-    map[nome].horas+=(parseFloat(r.total_horas)||0);
+    const cid=r.colaborador_id;
+    if(!map[cid])map[cid]={nome,dias:0,normais:0,e25:0,e375:0,e50:0,e100:0,falta:0};
+    map[cid].dias++;
+    const h=parseFloat(r.total_horas)||0;
+    const tipo=getTipoDia(r.data);
+    const calc=calcHorasExtras(h,tipo);
+    map[cid].normais+=calc.normais;map[cid].e25+=calc.extra25;
+    map[cid].e375+=calc.extra375;map[cid].e50+=calc.extra50;
+    map[cid].e100+=calc.extra100;map[cid].falta+=calc.falta;
   });
-  const periodoLabel=(inicio||'')+(fim?' até '+fim:'');
-  const rows=Object.values(map).map(v=>[v.nome,v.dias,v.horas.toFixed(1)+'h',(v.horas/v.dias).toFixed(1)+'h']);
-  exportarRelatorioPDF('Relatório de horas — '+periodoLabel,['Colaborador','Dias','Total horas','Média/dia'],rows);
+  const rows=Object.values(map).map(v=>[
+    v.nome, v.dias,
+    v.normais.toFixed(1)+'h',
+    v.e25>0?v.e25.toFixed(1)+'h':'—',
+    v.e375>0?v.e375.toFixed(1)+'h':'—',
+    v.e50>0?v.e50.toFixed(1)+'h':'—',
+    v.e100>0?v.e100.toFixed(1)+'h':'—',
+    v.falta>0?v.falta.toFixed(1)+'h':'—'
+  ]);
+  exportarRelatorioPDF(
+    'Relatório de horas — '+(inicio||'')+(fim?' até '+fim:''),
+    ['Colaborador','Dias','H.Normais','Extra 25%','Extra 37,5%','Sáb 50%','Dom/Fer 100%','Em falta'],
+    rows
+  );
 }
 
 async function exportarRelatorioHorasExcel(){
@@ -2572,13 +2590,36 @@ async function exportarRelatorioHorasExcel(){
   const fim=document.getElementById('relDataFim')?.value||'';
   const colabId=document.getElementById('relColab')?.value||'';
   if(!inicio&&!fim){toast('Selecione um período','erro');return;}
-  let query=sb.from('ponto').select('*,colaboradores(nome)').gte('data',inicio).lte('data',fim).order('data',{ascending:true});
+  let query=sb.from('ponto').select('colaborador_id,data,total_horas,colaboradores(nome)').order('data',{ascending:false}).limit(500);
+  if(inicio)query=query.gte('data',inicio);
+  if(fim)query=query.lte('data',fim);
   if(colabId)query=query.eq('colaborador_id',colabId);
   const{data}=await query;
   if(!data||!data.length){toast('Sem dados','erro');return;}
-  const rows=data.map(r=>({'Colaborador':r.colaboradores?.nome||'—','Data':r.data,'Entrada':r.entrada||'','Início pausa':r.inicio_pausa||'','Fim pausa':r.fim_pausa||'','Saída':r.saida||'','Total horas':r.total_horas||''}));
-  const periodoLabel2=(inicio||'')+(fim?'_'+fim:'');
-  exportarRelatorioExcel(rows,'Relatorio_Horas_'+periodoLabel2);
+  const map={};
+  data.forEach(r=>{
+    const nome=r.colaboradores?.nome||'—';
+    const cid=r.colaborador_id;
+    if(!map[cid])map[cid]={nome,dias:0,normais:0,e25:0,e375:0,e50:0,e100:0,falta:0};
+    map[cid].dias++;
+    const h=parseFloat(r.total_horas)||0;
+    const tipo=getTipoDia(r.data);
+    const calc=calcHorasExtras(h,tipo);
+    map[cid].normais+=calc.normais;map[cid].e25+=calc.extra25;
+    map[cid].e375+=calc.extra375;map[cid].e50+=calc.extra50;
+    map[cid].e100+=calc.extra100;map[cid].falta+=calc.falta;
+  });
+  const rows=Object.values(map).map(v=>({
+    'Colaborador':v.nome,'Dias':v.dias,
+    'H. Normais':v.normais.toFixed(1),
+    'H. Extra 25%':v.e25>0?v.e25.toFixed(1):'—',
+    'H. Extra 37,5%':v.e375>0?v.e375.toFixed(1):'—',
+    'H. Extra 50% (Sáb)':v.e50>0?v.e50.toFixed(1):'—',
+    'H. Extra 100% (Dom/Fer)':v.e100>0?v.e100.toFixed(1):'—',
+    'Em falta':v.falta>0?v.falta.toFixed(1):'—',
+    'Total':(v.normais+v.e25+v.e375+v.e50+v.e100).toFixed(1)
+  }));
+  exportarRelatorioExcel(rows,'Relatorio_Horas_'+(inicio||'')+(fim?'_'+fim:''));
 }
 
 async function exportarAusenciasPDF(){
@@ -2646,14 +2687,13 @@ async function exportarPontosPDF(){
   const colabId=document.getElementById('pontosFilterColab')?.value||'';
   const dataInicio=document.getElementById('pontosDataInicio')?.value||'';
   const dataFim=document.getElementById('pontosDataFim')?.value||'';
-  let query=sb.from('ponto').select('*,colaboradores(nome)').order('data',{ascending:false}).limit(500);
+  const ordenacao=document.getElementById('pontosOrdem')?.value||'desc';
+  let query=sb.from('ponto').select('*,colaboradores(nome)').order('data',{ascending:ordenacao==='asc'}).limit(500);
   if(colabId)query=query.eq('colaborador_id',colabId);
   if(dataInicio)query=query.gte('data',dataInicio);
   if(dataFim)query=query.lte('data',dataFim);
   const{data}=await query;
   if(!data||!data.length){toast('Sem dados','erro');return;}
-
-  const diasPT=['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
   const rows=data.map(r=>{
     const h=parseFloat(r.total_horas)||0;
     const tipo=getTipoDia(r.data);
@@ -2661,35 +2701,22 @@ async function exportarPontosPDF(){
     const calc=calcHorasExtras(h,tipo);
     const dataFmt=r.data?r.data.split('-').reverse().join('/'):'—';
     const pausa=r.inicio_pausa&&r.fim_pausa?r.inicio_pausa+'–'+r.fim_pausa:'—';
-
     let tipoStr='Normal';
-    if(tipo==='sabado') tipoStr='Sábado (50%)';
-    else if(tipo==='domingo') tipoStr='Domingo (100%)';
-    else if(tipo==='feriado') tipoStr='Feriado (100%)';
-    else if(calc.falta>0) tipoStr='-'+calc.falta.toFixed(1)+'h em falta';
+    if(tipo==='sabado')tipoStr='Sáb 50%';
+    else if(tipo==='domingo')tipoStr='Dom 100%';
+    else if(tipo==='feriado')tipoStr='Fer 100%';
+    else if(calc.falta>0)tipoStr='-'+calc.falta.toFixed(1)+'h falta';
     else{
-      let parts=[];
-      if(calc.extra25>0) parts.push('+'+calc.extra25.toFixed(1)+'h 25%');
-      if(calc.extra375>0) parts.push('+'+calc.extra375.toFixed(1)+'h 37,5%');
-      if(parts.length) tipoStr=parts.join(' | ');
+      let p=[];
+      if(calc.extra25>0)p.push('+'+calc.extra25.toFixed(1)+'h 25%');
+      if(calc.extra375>0)p.push('+'+calc.extra375.toFixed(1)+'h 37,5%');
+      if(p.length)tipoStr=p.join(' ');
     }
-
-    return[
-      dataFmt,
-      diaSem,
-      r.entrada||'—',
-      pausa,
-      r.saida||'—',
-      h>0?h.toFixed(1)+'h':'—',
-      tipoStr
-    ];
+    return[dataFmt,diaSem,r.entrada||'—',pausa,r.saida||'—',h>0?h.toFixed(1)+'h':'—',tipoStr];
   });
-
-  // Get colaborador name for title
   const nomeColab=data[0]?.colaboradores?.nome||'Todos os colaboradores';
-  const periodo=(dataInicio||'')+(dataFim?' até '+dataFim:'');
   exportarRelatorioPDF(
-    'Folha de ponto — '+nomeColab+(periodo?' | '+periodo:''),
+    'Folha de ponto — '+nomeColab+(dataInicio?' | '+dataInicio+(dataFim?' até '+dataFim:''):''),
     ['Data','Dia','Entrada','Pausa','Saída','Total','Tipo/Extra'],
     rows
   );
@@ -2699,7 +2726,8 @@ async function exportarPontosExcel(){
   const colabId=document.getElementById('pontosFilterColab')?.value||'';
   const dataInicio=document.getElementById('pontosDataInicio')?.value||'';
   const dataFim=document.getElementById('pontosDataFim')?.value||'';
-  let query=sb.from('ponto').select('*,colaboradores(nome)').order('data',{ascending:false}).limit(500);
+  const ordem=document.getElementById('pontosOrdem')?.value||'desc';
+  let query=sb.from('ponto').select('*,colaboradores(nome)').order('data',{ascending:ordem==='asc'}).limit(500);
   if(colabId)query=query.eq('colaborador_id',colabId);
   if(dataInicio)query=query.gte('data',dataInicio);
   if(dataFim)query=query.lte('data',dataFim);
@@ -2709,30 +2737,31 @@ async function exportarPontosExcel(){
     const h=parseFloat(r.total_horas)||0;
     const tipo=getTipoDia(r.data);
     const calc=calcHorasExtras(h,tipo);
-    const pausa=r.inicio_pausa&&r.fim_pausa?r.inicio_pausa+'–'+r.fim_pausa:'—';
+    const pausa=r.inicio_pausa&&r.fim_pausa?r.inicio_pausa+'-'+r.fim_pausa:'—';
+    let tipoStr='Normal';
+    if(tipo==='sabado')tipoStr='Sábado 50%';
+    else if(tipo==='domingo')tipoStr='Domingo 100%';
+    else if(tipo==='feriado')tipoStr='Feriado 100%';
+    else if(calc.falta>0)tipoStr='Em falta';
+    else if(calc.extra25>0||calc.extra375>0)tipoStr='Extra semana';
     return{
       'Colaborador':r.colaboradores?.nome||'—',
       'Data':r.data?r.data.split('-').reverse().join('/'):'—',
-      'Dia':getDiaSemana(r.data),
-      'Entrada':r.entrada||'—',
-      'Pausa':pausa,
-      'Saída':r.saida||'—',
+      'Dia semana':getDiaSemana(r.data),
+      'Entrada':r.entrada||'—','Pausa':pausa,'Saída':r.saida||'—',
       'Total horas':h>0?h.toFixed(1):'—',
       'H. Normais':calc.normais>0?calc.normais.toFixed(1):'—',
-      'Extra 25%':calc.extra25>0?calc.extra25.toFixed(1):'—',
-      'Extra 37,5%':calc.extra375>0?calc.extra375.toFixed(1):'—',
-      'Sáb 50%':calc.extra50>0?calc.extra50.toFixed(1):'—',
-      'Dom/Fer 100%':calc.extra100>0?calc.extra100.toFixed(1):'—',
+      'H. Extra 25%':calc.extra25>0?calc.extra25.toFixed(1):'—',
+      'H. Extra 37,5%':calc.extra375>0?calc.extra375.toFixed(1):'—',
+      'H. Extra 50% (Sáb)':calc.extra50>0?calc.extra50.toFixed(1):'—',
+      'H. Extra 100% (Dom/Fer)':calc.extra100>0?calc.extra100.toFixed(1):'—',
       'Em falta':calc.falta>0?calc.falta.toFixed(1):'—',
-      'Tipo':tipo==='sabado'?'Sábado':tipo==='domingo'?'Domingo':tipo==='feriado'?'Feriado':'Normal'
+      'Tipo':tipoStr
     };
   });
   exportarRelatorioExcel(rows,'Relatorio_Ponto_'+(dataInicio||'')+(dataFim?'_'+dataFim:''));
 }
 
-// ─────────────────────────────────────────────────────
-// HISTÓRICO DE ALTERAÇÕES
-// ─────────────────────────────────────────────────────
 async function registarHistorico(colaboradorId, tipo, descricao, campos){
   try{
     await sb.from('historico_alteracoes').insert({
@@ -3069,18 +3098,38 @@ async function exportarFinanceiroPDF(){
   let pontoQuery=sb.from('ponto').select('colaborador_id,data,total_horas').gte('data',inicio||'2000-01-01').lte('data',fim||'2099-12-31');
   if(colabId)pontoQuery=pontoQuery.eq('colaborador_id',colabId);
   const{data:pontos}=await pontoQuery;
-  if(!pontos||!pontos.length){
-    document.getElementById('finStats').innerHTML='<p style="color:var(--text2);font-size:13px;text-align:center;padding:1rem">Sem registos no período selecionado</p>';
-    document.getElementById('finTabela').innerHTML='';
-    return;
-  }
   const rows=(colabs||[]).map(c=>{
-    const horas=(pontos||[]).filter(p=>p.colaborador_id===c.id).reduce((a,p)=>a+(parseFloat(p.total_horas)||0),0);
-    const bruto=horas*(parseFloat(c.preco_hh)||0);
-    const ajuda=bruto-(parseFloat(c.salario_base)||0);
-    return[c.nome,horas.toFixed(1)+'h',(parseFloat(c.preco_hh)||0).toFixed(2)+' €',bruto.toFixed(2)+' €',(parseFloat(c.salario_base)||0).toFixed(2)+' €',ajuda.toFixed(2)+' €'];
+    const meusPontos=(pontos||[]).filter(p=>p.colaborador_id===c.id);
+    let normais=0,e25=0,e375=0,e50=0,e100=0;
+    meusPontos.forEach(p=>{
+      const h=parseFloat(p.total_horas)||0;
+      const tipo=getTipoDia(p.data);
+      const calc=calcHorasExtras(h,tipo);
+      normais+=calc.normais;e25+=calc.extra25;e375+=calc.extra375;
+      e50+=calc.extra50;e100+=calc.extra100;
+    });
+    const precoHH=parseFloat(c.preco_hh)||0;
+    const salario=parseFloat(c.salario_base)||0;
+    const bruto=(normais*precoHH)+(e25*precoHH*1.25)+(e375*precoHH*1.375)+(e50*precoHH*1.50)+(e100*precoHH*2.00);
+    const ajuda=bruto-salario;
+    return[
+      c.nome,
+      normais.toFixed(1)+'h',
+      e25>0?e25.toFixed(1)+'h':'—',
+      e375>0?e375.toFixed(1)+'h':'—',
+      e50>0?e50.toFixed(1)+'h':'—',
+      e100>0?e100.toFixed(1)+'h':'—',
+      precoHH.toFixed(2)+' €',
+      bruto.toFixed(2)+' €',
+      salario.toFixed(2)+' €',
+      ajuda.toFixed(2)+' €'
+    ];
   });
-  exportarRelatorioPDF('Resumo financeiro — '+(inicio||'')+(fim?' até '+fim:''),['Colaborador','Horas','Preço H.H','Valor bruto','Salário base','Ajuda de custo'],rows);
+  exportarRelatorioPDF(
+    'Resumo financeiro — '+(inicio||'')+(fim?' até '+fim:''),
+    ['Colaborador','H.Normais','Extra 25%','Extra 37,5%','Sáb 50%','Dom/Fer 100%','Preço H.H','Valor bruto','Salário','Ajuda custo'],
+    rows
+  );
 }
 
 async function exportarFinanceiroExcel(){
@@ -3093,16 +3142,32 @@ async function exportarFinanceiroExcel(){
   let pontoQuery=sb.from('ponto').select('colaborador_id,data,total_horas').gte('data',inicio||'2000-01-01').lte('data',fim||'2099-12-31');
   if(colabId)pontoQuery=pontoQuery.eq('colaborador_id',colabId);
   const{data:pontos}=await pontoQuery;
-  if(!pontos||!pontos.length){
-    document.getElementById('finStats').innerHTML='<p style="color:var(--text2);font-size:13px;text-align:center;padding:1rem">Sem registos no período selecionado</p>';
-    document.getElementById('finTabela').innerHTML='';
-    return;
-  }
   const rows=(colabs||[]).map(c=>{
-    const horas=(pontos||[]).filter(p=>p.colaborador_id===c.id).reduce((a,p)=>a+(parseFloat(p.total_horas)||0),0);
-    const bruto=horas*(parseFloat(c.preco_hh)||0);
-    const ajuda=bruto-(parseFloat(c.salario_base)||0);
-    return{'Colaborador':c.nome,'Horas':horas.toFixed(1),'Preço H.H':parseFloat(c.preco_hh)||0,'Valor bruto':bruto.toFixed(2),'Salário base':parseFloat(c.salario_base)||0,'Ajuda de custo':ajuda.toFixed(2)};
+    const meusPontos=(pontos||[]).filter(p=>p.colaborador_id===c.id);
+    let normais=0,e25=0,e375=0,e50=0,e100=0;
+    meusPontos.forEach(p=>{
+      const h=parseFloat(p.total_horas)||0;
+      const tipo=getTipoDia(p.data);
+      const calc=calcHorasExtras(h,tipo);
+      normais+=calc.normais;e25+=calc.extra25;e375+=calc.extra375;
+      e50+=calc.extra50;e100+=calc.extra100;
+    });
+    const precoHH=parseFloat(c.preco_hh)||0;
+    const salario=parseFloat(c.salario_base)||0;
+    const bruto=(normais*precoHH)+(e25*precoHH*1.25)+(e375*precoHH*1.375)+(e50*precoHH*1.50)+(e100*precoHH*2.00);
+    const ajuda=bruto-salario;
+    return{
+      'Colaborador':c.nome,
+      'H. Normais':normais.toFixed(1),
+      'H. Extra 25%':e25>0?e25.toFixed(1):'—',
+      'H. Extra 37,5%':e375>0?e375.toFixed(1):'—',
+      'H. Extra 50% (Sáb)':e50>0?e50.toFixed(1):'—',
+      'H. Extra 100% (Dom/Fer)':e100>0?e100.toFixed(1):'—',
+      'Preço H.H':precoHH.toFixed(2),
+      'Valor bruto':bruto.toFixed(2),
+      'Salário base':salario.toFixed(2),
+      'Ajuda de custo':ajuda.toFixed(2)
+    };
   });
   exportarRelatorioExcel(rows,'Financeiro_'+(inicio||'')+(fim?'_'+fim:''));
 }
