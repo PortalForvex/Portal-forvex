@@ -265,8 +265,78 @@ async function loadPonto(){
 }
 
 function renderPontoTable(rows){
-  return '<table><thead><tr><th>Data</th><th>Entrada</th><th>Início pausa</th><th>Fim pausa</th><th>Saída</th><th>Total</th></tr></thead><tbody>'+
-    rows.map(r=>'<tr><td>'+r.data+'</td><td>'+(r.entrada||'—')+'</td><td>'+(r.inicio_pausa||'—')+'</td><td>'+(r.fim_pausa||'—')+'</td><td>'+(r.saida||'—')+'</td><td>'+(r.total_horas?'<span class="badge bg2">'+r.total_horas+'</span>':'—')+'</td></tr>').join('')+'</tbody></table>';
+  const periodo=getPeriodoAtual();
+  // Summary stats
+  let totalNormais=0,totalExtra25=0,totalExtra375=0,totalExtra50=0,totalExtra100=0,totalFalta=0;
+  rows.forEach(r=>{
+    const h=parseFloat(r.total_horas)||0;
+    const tipo=getTipoDia(r.data);
+    const calc=calcHorasExtras(h,tipo);
+    totalNormais+=calc.normais;totalExtra25+=calc.extra25;totalExtra375+=calc.extra375;
+    totalExtra50+=calc.extra50;totalExtra100+=calc.extra100;totalFalta+=calc.falta;
+  });
+  const stats=`<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(100px,1fr));gap:8px;margin-bottom:1rem">
+    <div style="background:var(--blu);border-radius:8px;padding:10px"><div style="font-size:11px;color:var(--text2)">Normais</div><div style="font-size:18px;font-weight:600;color:var(--blue)">${totalNormais.toFixed(1)}h</div></div>
+    <div style="background:#EAF3DE;border-radius:8px;padding:10px"><div style="font-size:11px;color:#3B6D11">Extra 25%</div><div style="font-size:18px;font-weight:600;color:#3B6D11">${totalExtra25.toFixed(1)}h</div></div>
+    <div style="background:#EAF3DE;border-radius:8px;padding:10px"><div style="font-size:11px;color:#3B6D11">Extra 37,5%</div><div style="font-size:18px;font-weight:600;color:#3B6D11">${totalExtra375.toFixed(1)}h</div></div>
+    <div style="background:#FAEEDA;border-radius:8px;padding:10px"><div style="font-size:11px;color:#854F0B">Sáb 50%</div><div style="font-size:18px;font-weight:600;color:#BA7517">${totalExtra50.toFixed(1)}h</div></div>
+    <div style="background:#FAEEDA;border-radius:8px;padding:10px"><div style="font-size:11px;color:#854F0B">Dom/Fer 100%</div><div style="font-size:18px;font-weight:600;color:#BA7517">${totalExtra100.toFixed(1)}h</div></div>
+    <div style="background:#FCEBEB;border-radius:8px;padding:10px"><div style="font-size:11px;color:#A32D2D">Em falta</div><div style="font-size:18px;font-weight:600;color:#E24B4A">${totalFalta.toFixed(1)}h</div></div>
+  </div>
+  <div style="font-size:12px;color:var(--text2);margin-bottom:8px">Período: ${periodo.label}</div>`;
+
+  const tableRows=rows.map(r=>{
+    const h=parseFloat(r.total_horas)||0;
+    const tipo=getTipoDia(r.data);
+    const diaSem=getDiaSemana(r.data);
+    const calc=calcHorasExtras(h,tipo);
+    const dataFmt=r.data.split('-').reverse().join('/');
+    
+    let totalBadge='—';
+    let rowBg='';
+    if(h>0){
+      if(tipo==='sabado'){
+        totalBadge=`<span style="background:#FAEEDA;color:#854F0B;padding:3px 10px;border-radius:20px;font-weight:500">${h.toFixed(1)}h</span>`;
+        rowBg='background:#FFFBF0';
+      } else if(tipo==='domingo'||tipo==='feriado'){
+        totalBadge=`<span style="background:#FCEBEB;color:#A32D2D;padding:3px 10px;border-radius:20px;font-weight:500">${h.toFixed(1)}h</span>`;
+        rowBg='background:#FFF5F5';
+      } else if(h<8){
+        totalBadge=`<span style="background:#FCEBEB;color:#A32D2D;padding:3px 10px;border-radius:20px;font-weight:500">${h.toFixed(1)}h</span>`;
+        rowBg='background:#FFF8F8';
+      } else {
+        totalBadge=`<span style="background:#EAF3DE;color:#3B6D11;padding:3px 10px;border-radius:20px;font-weight:500">${h.toFixed(1)}h</span>`;
+      }
+    }
+
+    let tipoLabel='';
+    if(tipo==='sabado') tipoLabel=`<span style="background:#FAEEDA;color:#854F0B;padding:2px 8px;border-radius:6px;font-size:11px">Sáb 50%</span>`;
+    else if(tipo==='domingo') tipoLabel=`<span style="background:#FCEBEB;color:#A32D2D;padding:2px 8px;border-radius:6px;font-size:11px">Dom 100%</span>`;
+    else if(tipo==='feriado') tipoLabel=`<span style="background:#FCEBEB;color:#A32D2D;padding:2px 8px;border-radius:6px;font-size:11px">Fer 100%</span>`;
+    else if(calc.falta>0) tipoLabel=`<span style="background:#FCEBEB;color:#A32D2D;padding:2px 8px;border-radius:6px;font-size:11px">-${calc.falta.toFixed(1)}h falta</span>`;
+    else if(calc.extra25>0||calc.extra375>0){
+      let parts=[];
+      if(calc.extra25>0) parts.push(`+${calc.extra25.toFixed(1)}h 25%`);
+      if(calc.extra375>0) parts.push(`+${calc.extra375.toFixed(1)}h 37,5%`);
+      tipoLabel=parts.map(p=>`<span style="background:#EAF3DE;color:#3B6D11;padding:2px 8px;border-radius:6px;font-size:11px">${p}</span>`).join(' ');
+    } else if(h>0) tipoLabel=`<span style="background:var(--blu);color:var(--blue);padding:2px 8px;border-radius:6px;font-size:11px">Normal</span>`;
+
+    const diasemColor=tipo==='sabado'?'color:#BA7517;font-weight:500':tipo==='domingo'||tipo==='feriado'?'color:#E24B4A;font-weight:500':'color:var(--text2)';
+    const pausa=r.inicio_pausa&&r.fim_pausa?r.inicio_pausa+'–'+r.fim_pausa:'—';
+
+    return `<tr style="${rowBg};border-top:0.5px solid var(--border)">
+      <td style="padding:9px 12px">${dataFmt}</td>
+      <td style="padding:9px 12px;${diasemColor}">${diaSem}</td>
+      <td style="padding:9px 12px;text-align:center">${r.entrada||'—'}</td>
+      <td style="padding:9px 12px;text-align:center;color:var(--text2);font-size:12px">${pausa}</td>
+      <td style="padding:9px 12px;text-align:center">${r.saida||'—'}</td>
+      <td style="padding:9px 12px;text-align:center">${totalBadge}</td>
+      <td style="padding:9px 12px">${tipoLabel}</td>
+    </tr>`;
+  }).join('');
+
+  return stats+'<table><thead><tr><th>Data</th><th>Dia</th><th>Entrada</th><th>Pausa</th><th>Saída</th><th>Total</th><th>Tipo</th></tr></thead><tbody>'+tableRows+'</tbody></table>'+
+    '<div style="background:var(--blu);border-radius:8px;padding:10px;margin-top:8px;font-size:12px;color:var(--text2)">Normal = 8h/dia · Extra semana: 1ª hora 25%, demais 37,5% · Sábado = 50% · Domingo/Feriado = 100%</div>'';
 }
 
 async function loadRecibos(){
@@ -574,6 +644,8 @@ async function guardarEditAdm(id){
     num_colaborador:document.getElementById('ea_num').value.trim(),
     notas_adm:      document.getElementById('ea_notas').value.trim()
   };
+  // Get current values BEFORE update
+  const{data:antes}=await sb.from('colaboradores').select('*').eq('id',id).maybeSingle();
   const{error}=await sb.from('colaboradores').update(payload).eq('id',id);
   if(error){
     document.getElementById('ea_erro').style.display='block';
@@ -588,7 +660,12 @@ async function guardarEditAdm(id){
   };
   const campos=Object.keys(payload)
     .filter(k=>payload[k]!==null&&payload[k]!=='')
-    .map(k=>campoLabels[k]||k);
+    .map(k=>{
+      const label=campoLabels[k]||k;
+      const valorAntes=antes?antes[k]||'—':'—';
+      const valorDepois=payload[k]||'—';
+      return label+': '+valorAntes+' → '+valorDepois;
+    });
   await registarHistorico(id,'profissional','Dados profissionais editados',campos);
   document.getElementById('modalEditAdm').remove();
   verColab(id);
@@ -1166,16 +1243,15 @@ document.querySelectorAll('.mo').forEach(m=>m.addEventListener('click',e=>{if(e.
 // RELATÓRIO MENSAL DE HORAS
 // ─────────────────────────────────────────────────────
 async function initRelatorio(){
-  const sel=document.getElementById('relMes');
-  if(!sel)return;
-  const now=new Date();
-  for(let i=0;i<12;i++){
-    const d=new Date(now.getFullYear(),now.getMonth()-i,1);
-    const val=d.getFullYear()+'-'+(String(d.getMonth()+1).padStart(2,'0'));
-    const label=d.toLocaleDateString('pt-PT',{month:'long',year:'numeric'});
-    const opt=document.createElement('option');
-    opt.value=val;opt.textContent=label;
-    sel.appendChild(opt);
+  const sel=document.getElementById('relPeriodo');
+  if(sel&&sel.options.length<=1){
+    getUltimosPeriodos().forEach((p,i)=>{
+      const o=document.createElement('option');
+      o.value=p.inicio+'|'+p.fim;
+      o.textContent=p.label;
+      if(i===0)o.selected=true;
+      sel.appendChild(o);
+    });
   }
   const selC=document.getElementById('relColab');
   const{data:colabs}=await sb.from('colaboradores').select('id,nome').eq('ativo',true).order('nome');
@@ -1186,10 +1262,10 @@ async function initRelatorio(){
 }
 
 async function loadRelatorio(){
-  const inicio=document.getElementById('relDataInicio')?.value||'';
-  const fim=document.getElementById('relDataFim')?.value||'';
+  const periodoVal=document.getElementById('relPeriodo')?.value||'';
+  if(!periodoVal)return;
+  const[inicio,fim]=periodoVal.split('|');
   const colabId=document.getElementById('relColab')?.value||'';
-  if(!inicio&&!fim)return;
   let query=sb.from('ponto').select('*,colaboradores(nome)').order('data',{ascending:false}).limit(500);
   if(inicio)query=query.gte('data',inicio);
   if(fim)query=query.lte('data',fim);
@@ -1226,22 +1302,44 @@ async function loadRelatorio(){
       <div style="font-size:22px;font-weight:600;color:var(--blue)">${vals.length}</div>
     </div>`;
 
+  // Also fetch ponto details for extras calculation
+  let query2=sb.from('ponto').select('colaborador_id,data,total_horas').gte('data',inicio).lte('data',fim);
+  if(colabId)query2=query2.eq('colaborador_id',colabId);
+  const{data:pontoDetalhes}=await query2;
+
   let rows='';
   vals.forEach(v=>{
-    const media=v.dias>0?(v.horas/v.dias).toFixed(1):'0';
-    const badge=v.horas>=160?'bg2':v.horas>=120?'ba2':'br2';
+    const meusPontos=(pontoDetalhes||[]).filter(p=>p.colaborador_id===v.cid);
+    let normais=0,e25=0,e375=0,e50=0,e100=0,falta=0;
+    meusPontos.forEach(p=>{
+      const h=parseFloat(p.total_horas)||0;
+      const tipo=getTipoDia(p.data);
+      const calc=calcHorasExtras(h,tipo);
+      normais+=calc.normais;e25+=calc.extra25;e375+=calc.extra375;
+      e50+=calc.extra50;e100+=calc.extra100;falta+=calc.falta;
+    });
     rows+=`<tr>
       <td><strong>${v.nome}</strong></td>
       <td style="text-align:center">${v.dias}</td>
-      <td style="text-align:center"><span class="badge ${badge}">${v.horas.toFixed(1)}h</span></td>
-      <td style="text-align:center">${media}h</td>
+      <td style="text-align:center;font-weight:500">${normais.toFixed(1)}h</td>
+      <td style="text-align:center;color:#3B6D11">${e25>0?e25.toFixed(1)+'h':'—'}</td>
+      <td style="text-align:center;color:#3B6D11">${e375>0?e375.toFixed(1)+'h':'—'}</td>
+      <td style="text-align:center;color:#BA7517">${e50>0?e50.toFixed(1)+'h':'—'}</td>
+      <td style="text-align:center;color:#A32D2D">${e100>0?e100.toFixed(1)+'h':'—'}</td>
+      <td style="text-align:center;color:#E24B4A">${falta>0?falta.toFixed(1)+'h':'—'}</td>
     </tr>`;
   });
 
   document.getElementById('relTabela').innerHTML=`
     <table><thead><tr>
-      <th>Colaborador</th><th>Dias</th><th>Total horas</th><th>Média/dia</th>
-    </tr></thead><tbody>${rows}</tbody></table>`;
+      <th>Colaborador</th><th>Dias</th><th>Normais</th>
+      <th style="color:#3B6D11">Extra 25%</th>
+      <th style="color:#3B6D11">Extra 37,5%</th>
+      <th style="color:#BA7517">Sáb 50%</th>
+      <th style="color:#A32D2D">Dom/Fer 100%</th>
+      <th style="color:#E24B4A">Em falta</th>
+    </tr></thead><tbody>${rows}</tbody></table>
+    <div style="background:var(--blu);border-radius:8px;padding:10px;margin-top:8px;font-size:12px;color:var(--text2)">Normal = 8h/dia · Extra semana: 1ª hora 25%, demais 37,5% · Sábado = 50% · Domingo/Feriado = 100%</div>`;
 }
 
 // ─────────────────────────────────────────────────────
@@ -1678,6 +1776,118 @@ function toggleSidebar(){
 }
 
 
+
+// ─────────────────────────────────────────────────────
+// FERIADOS NACIONAIS PORTUGAL + HELPERS PONTO
+// ─────────────────────────────────────────────────────
+function calcPascoa(ano){
+  const a=ano%19, b=Math.floor(ano/100), c=ano%100;
+  const d=Math.floor(b/4), e=b%4, f=Math.floor((b+8)/25);
+  const g=Math.floor((b-f+1)/3), h=(19*a+b-d-g+15)%30;
+  const i=Math.floor(c/4), k=c%4, l=(32+2*e+2*i-h-k)%7;
+  const m=Math.floor((a+11*h+22*l)/451);
+  const mes=Math.floor((h+l-7*m+114)/31);
+  const dia=(h+l-7*m+114)%31+1;
+  return new Date(ano,mes-1,dia);
+}
+
+function getFeriadosPortugal(ano){
+  const pascoa=calcPascoa(ano);
+  const addDias=(d,n)=>new Date(d.getFullYear(),d.getMonth(),d.getDate()+n);
+  const fmt=(d)=>d.toISOString().split('T')[0];
+  return new Set([
+    ano+'-01-01', // Ano Novo
+    ano+'-04-25', // 25 Abril
+    ano+'-05-01', // Dia do Trabalhador
+    ano+'-06-10', // Dia de Portugal
+    ano+'-08-15', // Assunção
+    ano+'-10-05', // Implantação República
+    ano+'-11-01', // Todos os Santos
+    ano+'-12-01', // Restauração Independência
+    ano+'-12-08', // Imaculada Conceição
+    ano+'-12-25', // Natal
+    fmt(addDias(pascoa,-2)), // Sexta-feira Santa
+    fmt(pascoa),             // Páscoa
+    fmt(addDias(pascoa,60)), // Corpo de Deus
+  ]);
+}
+
+function getDiaSemana(dataStr){
+  const dias=['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+  return dias[new Date(dataStr+'T12:00:00').getDay()];
+}
+
+function getTipoDia(dataStr){
+  const d=new Date(dataStr+'T12:00:00');
+  const dow=d.getDay();
+  const feriados=getFeriadosPortugal(d.getFullYear());
+  if(feriados.has(dataStr)) return 'feriado';
+  if(dow===0) return 'domingo';
+  if(dow===6) return 'sabado';
+  return 'normal';
+}
+
+function calcHorasExtras(totalHoras, tipoDia){
+  const result={normais:0,extra25:0,extra375:0,extra50:0,extra100:0,falta:0};
+  if(tipoDia==='sabado'){
+    result.extra50=totalHoras;
+  } else if(tipoDia==='domingo'||tipoDia==='feriado'){
+    result.extra100=totalHoras;
+  } else {
+    // Dia normal
+    if(totalHoras<=8){
+      result.normais=totalHoras;
+      if(totalHoras<8) result.falta=parseFloat((8-totalHoras).toFixed(2));
+    } else {
+      result.normais=8;
+      const extra=totalHoras-8;
+      if(extra<=1){
+        result.extra25=extra;
+      } else {
+        result.extra25=1;
+        result.extra375=parseFloat((extra-1).toFixed(2));
+      }
+    }
+  }
+  return result;
+}
+
+// Get current period (21 of prev month to 20 of current month)
+function getPeriodoAtual(){
+  const hoje=new Date();
+  let inicio, fim;
+  if(hoje.getDate()>=21){
+    inicio=new Date(hoje.getFullYear(),hoje.getMonth(),21);
+    fim=new Date(hoje.getFullYear(),hoje.getMonth()+1,20);
+  } else {
+    inicio=new Date(hoje.getFullYear(),hoje.getMonth()-1,21);
+    fim=new Date(hoje.getFullYear(),hoje.getMonth(),20);
+  }
+  return{
+    inicio:inicio.toISOString().split('T')[0],
+    fim:fim.toISOString().split('T')[0],
+    label:inicio.toLocaleDateString('pt-PT',{day:'numeric',month:'short'})+' → '+fim.toLocaleDateString('pt-PT',{day:'numeric',month:'short',year:'numeric'})
+  };
+}
+
+// Get list of periods (last 12)
+function getUltimosPeriodos(){
+  const periodos=[];
+  const hoje=new Date();
+  for(let i=0;i<12;i++){
+    const ref=new Date(hoje.getFullYear(),hoje.getMonth()-i,1);
+    let inicio, fim;
+    inicio=new Date(ref.getFullYear(),ref.getMonth()-1,21);
+    fim=new Date(ref.getFullYear(),ref.getMonth(),20);
+    periodos.push({
+      inicio:inicio.toISOString().split('T')[0],
+      fim:fim.toISOString().split('T')[0],
+      label:inicio.toLocaleDateString('pt-PT',{day:'numeric',month:'short'})+' → '+fim.toLocaleDateString('pt-PT',{day:'numeric',month:'short',year:'numeric'})
+    });
+  }
+  return periodos;
+}
+
 // ─────────────────────────────────────────────────────
 // SESSÃO - EXPIRAR AUTOMATICAMENTE
 // ─────────────────────────────────────────────────────
@@ -1930,14 +2140,16 @@ async function loadAdmNotifPanel(){
 // RELATÓRIO DE AUSÊNCIAS
 // ─────────────────────────────────────────────────────
 async function initAusencias(){
-  // Set default date range to current month
-  const now=new Date();
-  const inicio=now.getFullYear()+'-'+(String(now.getMonth()+1).padStart(2,'0'))+'-01';
-  const fim=new Date(now.getFullYear(),now.getMonth()+1,0).toISOString().split('T')[0];
-  const iniEl=document.getElementById('ausDataInicio');
-  const fimEl=document.getElementById('ausDataFim');
-  if(iniEl&&!iniEl.value)iniEl.value=inicio;
-  if(fimEl&&!fimEl.value)fimEl.value=fim;
+  const sel=document.getElementById('ausPeriodo');
+  if(sel&&sel.options.length<=1){
+    getUltimosPeriodos().forEach((p,i)=>{
+      const o=document.createElement('option');
+      o.value=p.inicio+'|'+p.fim;
+      o.textContent=p.label;
+      if(i===0)o.selected=true;
+      sel.appendChild(o);
+    });
+  }
   const selC=document.getElementById('ausColab');
   if(selC && selC.options.length<=1){
     const{data:colabs}=await sb.from('colaboradores').select('id,nome').eq('ativo',true).order('nome');
@@ -1960,10 +2172,10 @@ function getDiasUteis(ano,mes){
 }
 
 async function loadAusencias(){
-  const inicio=document.getElementById('ausDataInicio')?.value||'';
-  const fim=document.getElementById('ausDataFim')?.value||'';
+  const periodoVal=document.getElementById('ausPeriodo')?.value||'';
+  if(!periodoVal)return;
+  const[inicio,fim]=periodoVal.split('|');
   const colabId=document.getElementById('ausColab')?.value||'';
-  if(!inicio&&!fim)return;
   const today=new Date().toISOString().split('T')[0];
 
   let query=sb.from('colaboradores').select('id,nome').eq('ativo',true).order('nome');
@@ -2388,7 +2600,7 @@ async function loadHistorico(){
     const icon=icons[h.tipo]||'ti-history';
     const[bg,fc]=(cores[h.tipo]||'#f9f8f5,#555').split(',');
     const campos=h.campos?JSON.parse(h.campos):[];
-    const camposHTML=Array.isArray(campos)&&campos.length?'<div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:6px">'+campos.map(c=>`<span style="background:${bg};color:${fc};padding:2px 8px;border-radius:6px;font-size:11px">${c}</span>`).join('')+'</div>':'';
+    const camposHTML=Array.isArray(campos)&&campos.length?'<div style="display:flex;flex-direction:column;gap:3px;margin-top:6px">'+campos.map(c=>`<div style="font-size:11px;color:${fc};background:${bg};padding:3px 8px;border-radius:6px;font-family:monospace">${c}</div>`).join('')+'</div>':'';
     const data_hora=new Date(h.criado_em).toLocaleDateString('pt-PT')+' · '+new Date(h.criado_em).toLocaleTimeString('pt-PT',{hour:'2-digit',minute:'2-digit'});
     html+=`<div style="display:flex;gap:14px;padding:12px 0;border-bottom:0.5px solid var(--border)">
       <div style="display:flex;flex-direction:column;align-items:center;min-width:36px">
