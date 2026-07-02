@@ -359,7 +359,7 @@ function abrirRec(id,titulo,url){
   document.getElementById('rs1').className='sd sact';
   document.getElementById('rs2').className='sd spend';
   document.getElementById('rs3').className='sd spend';
-  document.getElementById('recDocContent').innerHTML='<div style="text-align:center;padding:1rem"><div style="font-size:16px;font-weight:700;color:var(--blue);margin-bottom:4px">FORTIX SOLUTIONS, LDA</div><div style="font-size:12px;color:var(--text2);margin-bottom:1rem">'+titulo+'</div>'+(url&&url!=='null'?'<a href="'+url+'" target="_blank" class="bs bb" style="text-decoration:none;display:inline-flex;align-items:center;gap:6px"><i class="ti ti-external-link"></i> Abrir documento completo</a>':'<p style="color:var(--text2);font-size:13px">Sem link disponível</p>')+'</div>';
+  document.getElementById('recDocContent').innerHTML='<div style="text-align:center;padding:1rem"><div style="font-size:16px;font-weight:700;color:var(--blue);margin-bottom:4px">FORVEX SOLUTIONS, LDA</div><div style="font-size:12px;color:var(--text2);margin-bottom:1rem">'+titulo+'</div>'+(url&&url!=='null'?'<a href="'+url+'" target="_blank" class="bs bb" style="text-decoration:none;display:inline-flex;align-items:center;gap:6px"><i class="ti ti-external-link"></i> Abrir documento completo</a>':'<p style="color:var(--text2);font-size:13px">Sem link disponível</p>')+'</div>';
 }
 
 function confirmarLeitura(){
@@ -534,7 +534,7 @@ async function loadAColab(){
     html+='<td>'+fichaBadge+'</td>';
     html+='<td>'+(c.troca_senha?'<span class="badge br2">Pendente</span>':'<span class="badge bg2">✓ Trocada</span>')+'</td>';
     html+='<td>'+(c.ativo?'<span class="badge bg2">Ativo</span>':'<span class="badge br2">Inativo</span>')+'</td>';
-    html+='<td style="white-space:nowrap">'+btnCompletarFicha+btnVer+(c.nif!=='000000000'?btnEditar+btnDesativar+btnExcluir:'')+'</td>';
+    html+='<td style="white-space:nowrap">'+btnCompletarFicha+btnVer+(c.nif!=='519518233'?btnEditar+btnDesativar+btnExcluir:'')+'</td>';
     html+='</tr>';
   });
   
@@ -1190,8 +1190,8 @@ async function toggleAtivo(id, ativo){
         email:colab.email,
         nome:colab.nome,
         email_destino:colab.email,
-        assunto:'Aviso importante — Acesso ao portal Fortix',
-        mensagem:'Informamos que o seu acesso ao Portal Fortix foi encerrado.\n\nTem até '+prazoStr+' (3 dias) para aceder ao portal e fazer o download dos seus recibos e contrato de trabalho.\n\nApós esta data, o acesso será bloqueado definitivamente.\n\nFortix Solutions, Lda.'
+        assunto:'Aviso importante — Acesso ao portal Forvex',
+        mensagem:'Informamos que o seu acesso ao Portal Forvex foi encerrado.\n\nTem até '+prazoStr+' (3 dias) para aceder ao portal e fazer o download dos seus recibos e contrato de trabalho.\n\nApós esta data, o acesso será bloqueado definitivamente.\n\nForvex Solutions, Lda.'
       }).catch(e=>{});
     }
     toast('Colaborador desativado — email de aviso enviado!');
@@ -1314,7 +1314,7 @@ function exportarPontoExcel(){
   const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});
   const url=URL.createObjectURL(blob);
   const a=document.createElement('a');
-  a.href=url;a.download='ponto_fortix.csv';a.click();
+  a.href=url;a.download='ponto_forvex.csv';a.click();
   URL.revokeObjectURL(url);
 }
 
@@ -1713,7 +1713,7 @@ async function notificarDoc(email,nome,tipo,dias){
     email:email,
     nome:nome,
     email_destino:email,
-    assunto:'Aviso: documento a expirar — Fortix Solutions',
+    assunto:'Aviso: documento a expirar — Forvex Solutions',
     mensagem:`O seu documento (${tipo}) expira em ${dias} dias. Por favor contacte a administração para proceder à renovação.`
   }).then(()=>toast('✅ Email enviado a '+nome)).catch(e=>{
     console.error('EmailJS error:',e);
@@ -1856,9 +1856,9 @@ async function pedirRenovacaoEPI(tipo, tamanho){
   // Send email to ADM
   emailjs.send(EJ_SERVICE,'template_ype66lh',{
     name:cu.nome,
-    email:cu.email||'geral@fortix.pt',
-    nome:'Administração Fortix',
-    email_destino:'geral@fortix.pt',
+    email:cu.email||'geral@forvex.pt',
+    nome:'Administração Forvex',
+    email_destino:'geral@forvex.pt',
     assunto:`Pedido de renovação EPI — ${cu.nome}`,
     mensagem:`O colaborador ${cu.nome} (NIF: ${cu.nif}) solicita renovação do EPI: ${tipo}${tamanho?' (tamanho: '+tamanho+')':''}.`
   }).then(()=>toast('✅ Pedido enviado à administração!')).catch(e=>{
@@ -2534,12 +2534,12 @@ function exportarRelatorioPDF(titulo, headers, rows){
     </style>
   </head><body>
     <h1>${titulo}</h1>
-    <div class="sub">Fortix Solutions, Lda. &nbsp;|&nbsp; Gerado em ${agora}</div>
+    <div class="sub">Forvex Solutions, Lda. · NIF 519518233 &nbsp;|&nbsp; Gerado em ${agora}</div>
     <table>
       <thead><tr>${headers.map(h=>'<th>'+h+'</th>').join('')}</tr></thead>
       <tbody>${tableRows}</tbody>
     </table>
-    <div class="footer">Fortix Solutions · geral@fortix.pt</div>
+    <div class="footer">Forvex Solutions · geral@forvex.pt</div>
   </body></html>`);
   win.document.close();
   setTimeout(()=>win.print(),500);
@@ -2946,8 +2946,8 @@ async function loadAniversarios(){
         email:c.email,
         nome:c.nome,
         email_destino:c.email,
-        assunto:'🎂 Feliz Aniversário, '+c.nome.split(' ')[0]+'! — Fortix Solutions',
-        mensagem:'No seu dia especial, toda a equipa da Fortix Solutions deseja-lhe um feliz aniversário! Que este seja um dia incrível, repleto de alegria e momentos especiais. Um brinde a si! 🥂\n\nCom carinho,\nFortix Solutions, Lda.'
+        assunto:'🎂 Feliz Aniversário, '+c.nome.split(' ')[0]+'! — Forvex Solutions',
+        mensagem:'No seu dia especial, toda a equipa da Forvex Solutions deseja-lhe um feliz aniversário! Que este seja um dia incrível, repleto de alegria e momentos especiais. Um brinde a si! 🥂\n\nCom carinho,\nForvex Solutions, Lda.'
       });
     }catch(e){}
   });
