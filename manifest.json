@@ -2,17 +2,5 @@
   "name": "Portal Forvex Solutions",
   "short_name": "Portal Forvex",
   "description": "Portal do colaborador Forvex Solutions",
-  "start_url": "/Portal-forvex/",
-  "icons": [
-    {
-      "src": "COLOQUE_AQUI_O_LINK_DO_LOGO_NOVO",
-      "sizes": "192x192",
-      "type": "image/jpeg"
-    },
-    {
-      "src": "COLOQUE_AQUI_O_LINK_DO_LOGO_NOVO",
-      "sizes": "512x512",
-      "type": "image/jpeg"
-    }
-  ]
+  "start_url": "/Portal-forvex/"
 }
