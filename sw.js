@@ -1,16 +1,14 @@
-const CACHE = 'fortix-portal-v1';
+const CACHE = 'forvex-portal-v1';
 const ASSETS = [
-  '/Portal-fortix/',
-  '/Portal-fortix/index.html'
+  '/Portal-forvex/',
+  '/Portal-forvex/index.html'
 ];
-
 self.addEventListener('install', e => {
   e.waitUntil(
     caches.open(CACHE).then(c => c.addAll(ASSETS)).catch(() => {})
   );
   self.skipWaiting();
 });
-
 self.addEventListener('activate', e => {
   e.waitUntil(
     caches.keys().then(keys =>
@@ -19,7 +17,6 @@ self.addEventListener('activate', e => {
   );
   self.clients.claim();
 });
-
 self.addEventListener('fetch', e => {
   if(e.request.method !== 'GET') return;
   e.respondWith(
