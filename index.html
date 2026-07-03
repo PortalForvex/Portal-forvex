@@ -458,6 +458,11 @@ canvas{border:1px solid var(--border);border-radius:8px;cursor:crosshair;display
         <button class="bs bb" onclick="publicarDoc()">Publicar documento</button>
         <div id="aDMsg" style="margin-top:8px;font-size:13px"></div>
       </div>
+
+      <div class="cd" style="margin-top:1rem">
+        <div class="ch"><div class="ct">Documentos publicados</div></div>
+        <div id="docsAdmLista"><p style="color:var(--text2);font-size:13px;text-align:center;padding:1rem">A carregar...</p></div>
+      </div>
     </div>
 
     <div id="p-aniversarios" class="hidden">
@@ -611,6 +616,30 @@ canvas{border:1px solid var(--border);border-radius:8px;cursor:crosshair;display
     <div class="mbt">
       <button class="bs" onclick="closeModal('modalEditColab')">Cancelar</button>
       <button class="bs bb" onclick="guardarEditColab()">Guardar alterações</button>
+    </div>
+  </div>
+</div>
+
+<div class="mo" id="modalEditDoc">
+  <div class="mb" style="max-width:500px">
+    <button class="mc" onclick="closeModal('modalEditDoc')">&#x2715;</button>
+    <div style="font-size:17px;font-weight:600;margin-bottom:1rem"><i class="ti ti-edit"></i> Editar Documento</div>
+    <input type="hidden" id="editDocId"/>
+    <div class="fg">
+      <div class="fi" style="grid-column:1/-1"><label>Título</label><input type="text" id="editDocTitulo"/></div>
+      <div class="fi" style="grid-column:1/-1"><label>Descrição</label><input type="text" id="editDocDesc"/></div>
+      <div class="fi" style="grid-column:1/-1">
+        <label>Visibilidade</label>
+        <select id="editDocVis">
+          <option value="todos">Todos os colaboradores</option>
+          <option value="especifico">Colaboradores específicos (mantém seleção atual)</option>
+        </select>
+      </div>
+    </div>
+    <div id="editDocMsg" style="font-size:13px;color:var(--red);min-height:18px;margin-top:8px"></div>
+    <div class="mbt">
+      <button class="bs" onclick="closeModal('modalEditDoc')">Cancelar</button>
+      <button class="bs bb" onclick="guardarEditDoc()">Guardar alterações</button>
     </div>
   </div>
 </div>
