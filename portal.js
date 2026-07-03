@@ -490,7 +490,7 @@ async function loadFicha(){
 
 function abrirFicha(){
   var nif = cu ? cu.nif : '';
-  window.open('https://fortix-solutions.github.io/Ficha-Colaborador-Fortix/?nif=' + nif, '_blank');
+  window.open('https://portalforvex.github.io/Ficha-Colaborador-Fortix/?nif=' + nif, '_blank');
 }
 
 async function loadAColab(){
@@ -560,7 +560,7 @@ async function loadAColab(){
   el.querySelectorAll('.btn-completar-ficha').forEach(function(btn){
     btn.addEventListener('click',function(){
       const colab=window._colabData[btn.dataset.idx];
-      window.open('https://fortix-solutions.github.io/Ficha-Colaborador-Fortix/?adm=1&nif='+colab.nif,'_blank');
+      window.open('https://portalforvex.github.io/Ficha-Colaborador-Fortix/?adm=1&nif='+colab.nif,'_blank');
     });
   });
 }
@@ -2424,7 +2424,7 @@ async function loadDashAdm(){
         <div style="font-size:13px;font-weight:500">${c.nome}</div>
         <div style="font-size:12px;color:#854F0B">NIF: ${c.nif}</div>
       </div>
-      <button onclick="window.open('https://fortix-solutions.github.io/Ficha-Colaborador-Fortix/?adm=1&nif=${c.nif}','_blank')" style="font-size:12px;padding:5px 12px;border-radius:8px;border:none;background:#BA7517;color:#fff;cursor:pointer">Completar ficha</button>
+      <button onclick="window.open('https://portalforvex.github.io/Ficha-Colaborador-Fortix/?adm=1&nif=${c.nif}','_blank')" style="font-size:12px;padding:5px 12px;border-radius:8px;border:none;background:#BA7517;color:#fff;cursor:pointer">Completar ficha</button>
     </div>`).join('');
 
   // Build EPIs expandable list
