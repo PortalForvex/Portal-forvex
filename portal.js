@@ -150,6 +150,7 @@ function showP(page){
   if(page==='dashadm')loadDashAdm();
   if(page==='historico')initHistorico();
   if(page==='aniversarios')loadAniversarios();
+  if(page==='adocs')loadDocsAdm();
   if(page==='financeiro')initFinanceiro();
 }
 
@@ -944,7 +945,59 @@ async function publicarDoc(){
   document.getElementById('aDDesc').value='';
   document.getElementById('aDUrl').value='';
   if(fileInput)fileInput.value='';
-  setTimeout(()=>{msg.textContent='';loadDocs();},2000);
+  setTimeout(()=>{msg.textContent='';loadDocs();loadDocsAdm();},2000);
+}
+
+async function loadDocsAdm(){
+  const el=document.getElementById('docsAdmLista');
+  if(!el)return;
+  const{data,error}=await sb.from('documentos').select('*').order('criado_em',{ascending:false});
+  if(error){el.innerHTML='<p style="color:var(--red);font-size:13px">Erro ao carregar documentos.</p>';return;}
+  if(!data||!data.length){el.innerHTML='<p style="color:var(--text2);font-size:13px;text-align:center;padding:1rem">Nenhum documento publicado ainda.</p>';return;}
+  let html='<div style="display:flex;flex-direction:column;gap:8px">';
+  data.forEach(function(d){
+    const visLabel=d.visibilidade==='especifico'?'Colaboradores específicos':'Todos os colaboradores';
+    html+='<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;border:1px solid var(--border);border-radius:8px;padding:10px 12px;flex-wrap:wrap">';
+    html+='<div style="flex:1;min-width:180px">';
+    html+='<div style="font-size:13px;font-weight:600">'+d.titulo+'</div>';
+    html+='<div style="font-size:12px;color:var(--text2)">'+(d.descricao||'')+'</div>';
+    html+='<div style="font-size:11px;color:var(--text2);margin-top:2px">'+visLabel+' · '+new Date(d.criado_em).toLocaleDateString('pt-PT')+'</div>';
+    html+='</div>';
+    html+='<div style="display:flex;gap:6px;flex-shrink:0">';
+    if(d.ficheiro_url){
+      html+='<a href="'+d.ficheiro_url+'" target="_blank" rel="noopener" title="Ver" style="display:inline-flex;align-items:center;gap:5px;background:var(--blu);color:var(--blue);text-decoration:none;padding:6px 10px;border-radius:7px;font-size:12px;font-weight:500"><i class="ti ti-eye"></i></a>';
+    }
+    html+='<button onclick="abrirEditarDoc(\''+d.id+'\')" title="Editar" style="display:inline-flex;align-items:center;gap:5px;background:var(--ambl);color:var(--amber);border:1px solid #EAD3A3;padding:6px 10px;border-radius:7px;font-size:12px;font-weight:500;cursor:pointer"><i class="ti ti-edit"></i></button>';
+    html+='<button onclick="excluirDoc(\''+d.id+'\')" title="Excluir" style="display:inline-flex;align-items:center;gap:5px;background:var(--redl);color:var(--red);border:1px solid #F09595;padding:6px 10px;border-radius:7px;font-size:12px;font-weight:500;cursor:pointer"><i class="ti ti-trash"></i></button>';
+    html+='</div></div>';
+  });
+  html+='</div>';
+  el.innerHTML=html;
+}
+
+async function abrirEditarDoc(id){
+  const{data,error}=await sb.from('documentos').select('*').eq('id',id).maybeSingle();
+  if(error||!data){alert('Erro ao carregar documento.');return;}
+  document.getElementById('editDocId').value=data.id;
+  document.getElementById('editDocTitulo').value=data.titulo||'';
+  document.getElementById('editDocDesc').value=data.descricao||'';
+  document.getElementById('editDocVis').value=data.visibilidade||'todos';
+  document.getElementById('editDocMsg').textContent='';
+  showModal('modalEditDoc');
+}
+
+async function guardarEditDoc(){
+  const id=document.getElementById('editDocId').value;
+  const titulo=document.getElementById('editDocTitulo').value.trim();
+  const descricao=document.getElementById('editDocDesc').value.trim();
+  const visibilidade=document.getElementById('editDocVis').value;
+  const msg=document.getElementById('editDocMsg');
+  if(!titulo){msg.textContent='O título é obrigatório.';return;}
+  const{error}=await sb.from('documentos').update({titulo,descricao,visibilidade}).eq('id',id);
+  if(error){msg.textContent='Erro: '+error.message;return;}
+  closeModal('modalEditDoc');
+  loadDocsAdm();
+  loadDocs();
 }
 
 async function verColab(id){
@@ -1322,6 +1375,7 @@ async function excluirDoc(id){
   if(!confirm('Tem a certeza que deseja excluir este documento?'))return;
   await sb.from('documentos').delete().eq('id',id);
   loadDocs();
+  loadDocsAdm();
 }
 
 async function excluirAssinatura(id){
