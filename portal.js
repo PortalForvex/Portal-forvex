@@ -1301,7 +1301,17 @@ async function excluirColab(id, nome){
   await sb.from('assinaturas_recibos').delete().eq('colaborador_id',id);
   await sb.from('recibos').delete().eq('colaborador_id',id);
   await sb.from('ponto').delete().eq('colaborador_id',id);
-  await sb.from('colaboradores').delete().eq('id',id);
+  await sb.from('fichas').delete().eq('colaborador_id',id);
+  await sb.from('documentos_ficha').delete().eq('colaborador_id',id);
+  await sb.from('epis').delete().eq('colaborador_id',id);
+  await sb.from('notificacoes').delete().eq('colaborador_id',id);
+  await sb.from('historico_alteracoes').delete().eq('colaborador_id',id);
+  const{error}=await sb.from('colaboradores').delete().eq('id',id);
+  if(error){
+    toast('Não foi possível excluir: '+error.message);
+    return;
+  }
+  toast('Colaborador excluído!');
   loadAColab();
 }
 
