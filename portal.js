@@ -1000,7 +1000,9 @@ async function guardarEditDoc(){
   loadDocs();
 }
 
+let _colabPdfId=null;
 async function verColab(id){
+  _colabPdfId=id;
   const{data}=await sb.from('colaboradores').select('*').eq('id',id).maybeSingle();
   if(!data)return;
   // Try by colaborador_id first, then by nif as fallback
@@ -1089,6 +1091,86 @@ async function verColab(id){
 
   // Load docs after modal opens
   loadDocsColab(id);
+}
+
+async function baixarFichaPDF(){
+  const id=_colabPdfId;
+  if(!id)return;
+  const{data}=await sb.from('colaboradores').select('*').eq('id',id).maybeSingle();
+  if(!data){toast('Colaborador não encontrado');return;}
+  let{data:ficha}=await sb.from('fichas').select('*').eq('colaborador_id',id).maybeSingle();
+  if(!ficha && data.nif){
+    const{data:fichaByNif}=await sb.from('fichas').select('*').eq('nif',data.nif).maybeSingle();
+    ficha=fichaByNif;
+  }
+
+  let html='';
+  html+='<div class="fsec">Dados profissionais</div>';
+  html+='<div class="fr"><span class="fl">Nome</span><span>'+data.nome+'</span></div>';
+  html+='<div class="fr"><span class="fl">NIF</span><span>'+data.nif+'</span></div>';
+  html+='<div class="fr"><span class="fl">Email</span><span>'+(data.email||'—')+'</span></div>';
+  html+='<div class="fr"><span class="fl">Cargo</span><span>'+(data.cargo||'—')+'</span></div>';
+  html+='<div class="fr"><span class="fl">Departamento</span><span>'+(data.departamento||'—')+'</span></div>';
+  html+='<div class="fr"><span class="fl">Data admissão</span><span>'+(data.data_admissao||'—')+'</span></div>';
+  html+='<div class="fr"><span class="fl">Salário base</span><span>'+(data.salario_base?data.salario_base+' €':'—')+'</span></div>';
+  html+='<div class="fr"><span class="fl">Preço H.H</span><span>'+(data.preco_hh?data.preco_hh+' €/hora':'—')+'</span></div>';
+  html+='<div class="fr"><span class="fl">Tipo contrato</span><span>'+(data.tipo_contrato||'—')+'</span></div>';
+  html+='<div class="fr"><span class="fl">Estado</span><span>'+(data.ativo?'Ativo':'Inativo')+'</span></div>';
+
+  if(ficha){
+    html+='<div class="fsec">Identificação pessoal</div>';
+    html+='<div class="fr"><span class="fl">NISS</span><span>'+(ficha.niss||'—')+'</span></div>';
+    html+='<div class="fr"><span class="fl">Documento</span><span>'+(ficha.tipo_doc||'—')+' — '+(ficha.num_doc||'—')+'</span></div>';
+    html+='<div class="fr"><span class="fl">Validade doc.</span><span>'+(ficha.validade_doc||'—')+'</span></div>';
+    html+='<div class="fr"><span class="fl">Nacionalidade</span><span>'+(ficha.nacionalidade||'—')+'</span></div>';
+    html+='<div class="fr"><span class="fl">Data nascimento</span><span>'+(ficha.data_nasc||'—')+'</span></div>';
+    html+='<div class="fr"><span class="fl">Género</span><span>'+(ficha.genero||'—')+'</span></div>';
+
+    html+='<div class="fsec">Morada</div>';
+    html+='<div class="fr"><span class="fl">Morada</span><span>'+(ficha.morada||'—')+'</span></div>';
+    html+='<div class="fr"><span class="fl">Código postal</span><span>'+(ficha.cod_postal||'—')+'</span></div>';
+    html+='<div class="fr"><span class="fl">Localidade</span><span>'+(ficha.localidade||'—')+'</span></div>';
+    html+='<div class="fr"><span class="fl">Telemóvel</span><span>'+(ficha.telemovel||'—')+'</span></div>';
+    html+='<div class="fr"><span class="fl">Email pessoal</span><span>'+(ficha.email_pessoal||'—')+'</span></div>';
+    html+='<div class="fr"><span class="fl">Contacto urgência</span><span>'+(ficha.contacto_emerg||'—')+'</span></div>';
+
+    html+='<div class="fsec">Dados bancários</div>';
+    html+='<div class="fr"><span class="fl">IBAN</span><span>'+(ficha.iban||'—')+'</span></div>';
+    html+='<div class="fr"><span class="fl">SWIFT/BIC</span><span>'+(ficha.swift||'—')+'</span></div>';
+    html+='<div class="fr"><span class="fl">Banco</span><span>'+(ficha.banco||'—')+'</span></div>';
+    html+='<div class="fr"><span class="fl">IRS</span><span>'+(ficha.irs||'—')+'</span></div>';
+
+    html+='<div class="fsec">Família</div>';
+    html+='<div class="fr"><span class="fl">Estado civil</span><span>'+(ficha.estado_civil||'—')+'</span></div>';
+    html+='<div class="fr"><span class="fl">Dependentes</span><span>'+(ficha.tem_dep==='sim'?'Sim — '+(ficha.num_dep||'')+(ficha.idades_dep?' ('+ficha.idades_dep+')':''):'Não')+'</span></div>';
+
+    html+='<div class="fsec">Escolaridade e fardamento</div>';
+    html+='<div class="fr"><span class="fl">Grau escolar</span><span>'+(ficha.grau_escolar||'—')+'</span></div>';
+    html+='<div class="fr"><span class="fl">Nº bota</span><span>'+(ficha.num_bota||'—')+'</span></div>';
+    html+='<div class="fr"><span class="fl">Tamanho fato</span><span>'+(ficha.num_fato||'—')+'</span></div>';
+  } else {
+    html+='<div style="margin-top:12px;color:#A88232;font-size:13px">Ficha pessoal ainda não preenchida pelo colaborador.</div>';
+  }
+
+  const win=window.open('','_blank');
+  win.document.write(
+    '<html><head><meta charset="utf-8"><title>Ficha - '+data.nome+'</title>'+
+    '<style>'+
+    'body{font-family:Arial,Helvetica,sans-serif;color:#152B55;padding:32px;max-width:720px;margin:0 auto}'+
+    'h1{font-size:19px;color:#152B55;border-bottom:3px solid #2E5FA3;padding-bottom:10px;margin-bottom:4px}'+
+    '.sub{color:#888;font-size:12px;margin-bottom:8px}'+
+    '.fsec{font-size:12px;font-weight:700;color:#2E5FA3;text-transform:uppercase;letter-spacing:.4px;border-bottom:1px solid #E8EEF7;padding-bottom:4px;margin:20px 0 8px}'+
+    '.fr{display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid #f1f0ec;font-size:13px}'+
+    '.fl{color:#666;font-weight:500}'+
+    '@media print{body{padding:0 24px}}'+
+    '</style></head><body>'+
+    '<h1>Ficha do Colaborador</h1>'+
+    '<div class="sub">'+data.nome+' · Forvex Solutions, Lda. · Gerado em '+new Date().toLocaleDateString('pt-PT')+'</div>'+
+    html+
+    '</body></html>'
+  );
+  win.document.close();
+  setTimeout(function(){win.focus();win.print();},350);
 }
 
 async function loadDocsColab(colaboradorId){
